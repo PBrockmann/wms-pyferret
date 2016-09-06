@@ -21,7 +21,7 @@ Screencast:
 
 Next steps:
 - Use variables that are available from pyferret directly.
-- Propose synchronous maps when 2 (or more) variables ares requested to allow direct spatial intercomparison.
+- Propose synchronous maps when 2 (or more) variables are requested to allow direct spatial intercomparison.
 
 Prerequisites:
 - pyferret 7.0
