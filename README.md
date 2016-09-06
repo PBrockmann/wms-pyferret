@@ -13,11 +13,9 @@ Slippy maps avoid the command typing and display loops and hoppefully will help 
 Moreover considering that nowdays models are becoming incredibily refined with sometimes resolutions at 1/12°.
 That makes the pan/zoom navigation even more useful.
 
-Screencast:
-- ![Capture](https://github.com/PBrockmann/wms-pyferret/raw/master/capture_01.png)
+![Capture](https://github.com/PBrockmann/wms-pyferret/raw/master/capture_01.png)
 
-Screencast:
-- ![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast_01.mkv)
+![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast_01.mkv)
 
 Next steps:
 - Use variables that are available from pyferret directly.
