@@ -15,10 +15,10 @@ Moreover considering that nowdays models are becoming incredibily refined with s
 That makes the pan/zoom navigation even more useful.
 
 Screencast:
-- [https://github.com/PBrockmann/wms-pyferret/raw/master/capture_01.png] (Capture)
+- [Capture](https://github.com/PBrockmann/wms-pyferret/raw/master/capture_01.png)
 
 Screencast:
-- [screencast_01.mkv] (Screencast #1)
+- [Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast_01.mkv)
 
 Next steps:
 - Use variables that are available from pyferret directly.
