@@ -19,10 +19,10 @@ def app(environ, start_response):
 	WIDTH = int(fields['WIDTH'])
 
 	# BBOX=xmin,ymin,xmax,ymax
-	bbox = fields['BBOX'].split(',')
+	BBOX = fields['BBOX'].split(',')
 
-	hlim = "/hlim=" + bbox[0] + ":" + bbox[2]
-	vlim = "/vlim=" + bbox[1] + ":" + bbox[3]
+	hlim = "/hlim=" + BBOX[0] + ":" + BBOX[2]
+	vlim = "/vlim=" + BBOX[1] + ":" + BBOX[3]
 
 	try:
         	pyferret.run('set window/outline=5/aspect=1')		# outline=5 is a strange setting but works otherwise get outline around polygons
