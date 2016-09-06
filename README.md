@@ -15,7 +15,7 @@ Moreover considering that nowdays models are becoming incredibily refined with s
 That makes the pan/zoom navigation even more useful.
 
 Screencast:
-- [screencast.mkv] (Screencast #1)
+- [screencast_01.mkv] (Screencast #1)
 
 Next steps:
 - Use variables that are available from pyferret directly.
