@@ -1,0 +1,9 @@
+{
+  "name": "Slippy maps from pyferret",
+  "main": "slippy_map.html",
+  "window": {
+	  "toolbar": false,
+	  "width": 700,
+	  "height": 500
+       	  } 
+}

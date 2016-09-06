@@ -10,11 +10,13 @@ pyferret.start(quiet=True, journal=False, unmapped=True)
 
 def app(environ, start_response):
 
+    CMDarr = os.getenv('CMD').split()
+    CMD = CMDarr[0]				# get the ferret command to append needed qualifiers
+    VARIABLE = ' '.join(CMDarr[1:])		# 1 variable or 3 variables as var2D, lon2D, lat2D for curvilinear grids
+
     fields = parse_formvars(environ)
     if environ['REQUEST_METHOD'] == 'GET':
 
-	VARIABLE = fields['VARIABLE']
-	CMD = fields['CMD']
 	HEIGHT = int(fields['HEIGHT'])
 	WIDTH = int(fields['WIDTH'])
 
@@ -28,7 +30,7 @@ def app(environ, start_response):
         	pyferret.run('set window/outline=5/aspect=1')		# outline=5 is a strange setting but works otherwise get outline around polygons
         	pyferret.run('go margins 0 0 0 0')
 		
-		#print CMD +  "/x=-180:180/y=-90:90/noaxis/nolab/nokey" + hlim + vlim + " " + VARIABLE
+		#print CMD +  "/x=-180:180/y=-90:90/noaxis/nolab/nokey" + hlim + vlim + " " + VARIABLE 
 		pyferret.run(CMD +  "/x=-180:180/y=-90:90/noaxis/nolab/nokey" + hlim + vlim + " " + VARIABLE) 
 
 		tmpname = tempfile.NamedTemporaryFile(suffix='.png').name

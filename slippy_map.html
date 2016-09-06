@@ -8,31 +8,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.3/leaflet.js"></script>
 
     <style type="text/css">
-        html, body { width: 100%; height: 100%; font-family: "arial" }
-        #map1 { float: left; width: 600px; height: 400px; margin: 100px;}
-        pre { margin-left: 50px;}
-	.leaflet-tile { transform: scale(1.2); }
+        html, body { font-family: "arial" }
+        #map1 { float: left; width: 600px; height: 400px; margin-left: 50px; margin-top: 50px; }
+        .leaflet-tile { transform: scale(1.2); 
     </style>
 </head>
 
 <body>
 
-    <h3>Web Map Service (WMS) from pyferret</h3>
-    <p>This page will load tiles produced by workers from a gunicorn server (a python WSGI server)
-       that you will have previously launched with the following command:
-    <pre>gunicorn -w 4 myapp_request_pyferret_01:app</pre>
-    </p>
     <div id="map1"></div>
-
-    <p>More informations:
-	<ul>
-	<li><a href="http://ferret.pmel.noaa.gov/Ferret/documentation/pyferret" target="_blank">pyferret</a>
-	<li><a href="http://leafletjs.com/examples/wms/wms.html" target="_blank">WMS in Leaflet</a>
-	<li><a href="http://gunicorn.org/" target="_blank">gunicorn: a Python WSGI HTTP Server</a>
-	<li><a href="http://www.opengeospatial.org/standards/wms" target="_blank">OpenGIS® Web Map Service Interface Standard (WMS)</a>
-	</ul>
-    </p>
-
 
     <script type="text/javascript">
 
@@ -43,8 +27,6 @@
     //===============================================
     // Only in EPSG:4326
     var wmspyferret = L.tileLayer.wms("http://localhost:8000", {
-    	variable: 'temp[k=@max]',
-    	cmd: 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_plasma',
         crs: crs,
     	format: 'image/png',
     	transparent: true,
