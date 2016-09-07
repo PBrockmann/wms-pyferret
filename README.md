@@ -18,7 +18,7 @@ That makes the pan/zoom navigation even more useful.
 ![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast_01.mkv)
 
 Next steps:
-- Read variables and start the gunicorn server directly from pyferret.
+- Read variables and start the gunicorn server directly from pyferret [Custom Application](http://docs.gunicorn.org/en/stable/custom.html).
 - Propose synchronous maps when 2 (or more) variables are requested to allow direct spatial intercomparison.
 
 Prerequisites:
