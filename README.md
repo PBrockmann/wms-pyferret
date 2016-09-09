@@ -4,8 +4,9 @@ Patrick Brockmann - LSCE
 <hr>
 2016/09/09
 
-You can now ```import pyferretWMS``` from pyferret because the gunicorn is now launched directly from python and
-not anymore from command line. All temporary files (png tiles and the html + package.json for the nw application)
+You can now get slippy maps by a simple ```import pyferretWMS``` and a call to ```pyferretWMS.slippyMap()```.
+It is made possible because the gunicorn is now launched directly from python and not anymore from command line. 
+All temporary files (png tiles and the html + package.json for the nw application)
 are cleaned properly when exiting (either by closing the client application or by typing "CTRL+C" when launched from a python script).
 
 Test it quicky from:
