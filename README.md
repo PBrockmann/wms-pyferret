@@ -1,5 +1,19 @@
 
-2016/09/06 - Patrick Brockmann
+Patrick Brockmann - LSCE
+
+<hr>
+2016/09/09
+
+You can now call pyferretWMS.py from pyferret because the gunicorn is now launched from python and
+not anymore from command line. All tempory files are properly cleaned when either closing the client application
+or either typing a "CTRL+C" when launching from command line.
+
+Test it quicky from a test script:
+```python pyferretWPS_test.py 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_plasma temp[k=@max]'```
+```
+
+<hr>
+2016/09/06
 
 The idea developed in this early prototype is to render variables read and computed from pyferret as slippy maps.
 This can be done directly from the memory without having to save them in netCDF files 
