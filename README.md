@@ -6,7 +6,7 @@ Patrick Brockmann - LSCE
 
 You can now ```import pyferretWMS``` from pyferret because the gunicorn is now launched directly from python and
 not anymore from command line. All temporary files (png tiles and the html + package.json for the nw application)
-are cleaned properly when exiting (either closing the client application or either typing a "CTRL+C" when launching from command line).
+are cleaned properly when exiting (either by closing the client application or by typing "CTRL+C" when launched from a python script).
 
 Test it quicky from:
 ```python pyferretWMS_test.py 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_plasma temp[k=@max]'```
