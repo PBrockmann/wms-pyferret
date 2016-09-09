@@ -9,7 +9,7 @@ not anymore from command line. All temporary files (png tiles and the html + pac
 are cleaned properly when exiting (either closing the client application or either typing a "CTRL+C" when launching from command line).
 
 Test it quicky from:
-```python pyferretWPS_test.py 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_plasma temp[k=@max]'```
+```python pyferretWMS_test.py 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_plasma temp[k=@max]'```
 
 <hr>
 2016/09/06
