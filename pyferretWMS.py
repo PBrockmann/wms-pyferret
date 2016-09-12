@@ -45,7 +45,7 @@ def handler_app(environ, start_response):
         vlim = "/vlim=" + BBOX[1] + ":" + BBOX[3]
 
         try:
-                pyferret.run('set window/outline=5/aspect=1')           # outline=5 is a strange setting but works otherwise get outline around polygons
+                pyferret.run('set window/engine=cairo/outline=5/aspect=1')           # outline=5 is a strange setting but works otherwise get outline around polygons
                 pyferret.run('go margins 0 0 0 0')
                 
                 #print(CMD +  "/x=-180:180/y=-90:90/noaxis/nolab/nokey" + hlim + vlim + " " + VARIABLE)
