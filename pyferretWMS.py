@@ -146,7 +146,7 @@ def template_WMS_client():
     <title>Slippy map with WMS from pyferret</title>
 
     <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.3/leaflet.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.3/leaflet.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.3/leaflet.js"></script>
 
     <style type="text/css">
         html, body { font-family: "arial" }
