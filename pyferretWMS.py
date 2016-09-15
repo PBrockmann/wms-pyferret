@@ -83,18 +83,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
     def __init__(self, app, options=None):
 	global tmpdir
         tmpdir = tempfile.mkdtemp()
-        self.options = options or {}
-        self.application = app
-        super(StandaloneApplication, self).__init__()
-
-    def load_config(self):
-        config = dict([(key, value) for key, value in iteritems(self.options)
-                       if key in self.cfg.settings and value is not None])
-        for key, value in iteritems(config):
-            self.cfg.set(key.lower(), value)
-
-    def load(self):
-	master_pid = os.getppid()
+	master_pid = os.getpid()
 	print("---------> gunicorn master pid: ", master_pid)
 
 	instance_WMS_Client = Template(template_WMS_client())
@@ -107,7 +96,17 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	
     	proc = subprocess.Popen(['nw', tmpdir])
     	print('Client nw process: ', proc.pid)
+        self.options = options or {}
+        self.application = app
+        super(StandaloneApplication, self).__init__()
 
+    def load_config(self):
+        config = dict([(key, value) for key, value in iteritems(self.options)
+                       if key in self.cfg.settings and value is not None])
+        for key, value in iteritems(config):
+            self.cfg.set(key.lower(), value)
+
+    def load(self):
         return self.application
 
 # if control before exiting is needed
