@@ -13,6 +13,16 @@ Test it quicky from:
 ```python pyferretWMS_test.py 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_plasma temp[k=@max]'```
 
 <hr>
+2016/09/16
+
+Slippy map is now made from multiple workers. Problem: the dataset and variables if defined
+should be passed somehow to the workers. I haven't found yet how to enherit from the calling
+environment.
+Also  how this should can be called ? From a external function ? As a new command ?
+Speed for creating tiles is also an issue especially when you work with a curvilinear grid quite large
+(1441*1021), even with several workers.
+
+
 2016/09/06
 
 The idea developed in this early prototype is to render variables read and computed from pyferret as slippy maps.
