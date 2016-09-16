@@ -45,8 +45,17 @@ def handler_app(environ, start_response):
         vlim = "/vlim=" + BBOX[1] + ":" + BBOX[3]
 
         try:
-                #print(CMD +  "/x=-180:180/y=-90:90/noaxis/nolab/nokey" + hlim + vlim + " " + VARIABLE)
+
+        	pyferret.run('set window/outline=5/aspect=1')           # outline=5 is a strange setting but works otherwise get outline around polygons
+        	pyferret.run('go margins 0 0 0 0')
+
+        	pyferret.run("use levitus_climatology")
                 pyferret.run(CMD +  "/x=-180:180/y=-90:90/noaxis/nolab/nokey" + hlim + vlim + " " + VARIABLE)
+        
+		# Curvilinear case to test with:
+		# python pyferretWMS_test.py 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_viridis VOTEMPER[k=1,l=1], NAV_LON, NAV_LAT'
+		#pyferret.run("use ORCA0.25_ex1.nc")
+                #pyferret.run(CMD +  "/modulo/noaxis/nolab/nokey" + hlim + vlim + " " + VARIABLE)
        
                 tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
                 #pyferret.saveplot(tmpname, xpix=WIDTH, qual='/format=PNG/transparent')         # could be faster if saveplot would allow stringIO (ie buffer)
@@ -95,8 +104,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
     	print('Client nw process: ', proc.pid)
         self.options = options or {}
         self.application = app
-        pyferret.run('set window/outline=5/aspect=1')           # outline=5 is a strange setting but works otherwise get outline around polygons
-        pyferret.run('go margins 0 0 0 0')
+        pyferret.start(journal=False, unmapped=True, quiet=True)
         super(StandaloneApplication, self).__init__()
 
     def load_config(self):
@@ -126,8 +134,7 @@ def slippyMap(cmdRequested):
 
     options = {
         'bind': '%s:%s' % ('127.0.0.1', '8000'),
-        'workers': 1,
-        #'workers': number_of_workers(),		# 	get "Error 13: Permission denied" on the dataset when more than 1 worker ??
+        'workers': number_of_workers(),
         'worker_class': 'sync',
         'threads': 1 
     }
