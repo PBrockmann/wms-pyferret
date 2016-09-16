@@ -7,9 +7,11 @@ Patrick Brockmann - LSCE
 Slippy map is now made from multiple workers. Problem: the dataset and variables if defined
 should be passed somehow to the workers. I haven't found yet how to enherit from the calling
 environment.
-Also  how this should can be called ? From a external function ? As a new command ?
+
+Also how this should be called ? From a external function ? As a new command ?
+
 Speed for creating tiles is also an issue especially when you work with a curvilinear grid quite large
-(1441*1021), even with several workers.
+(1440x1021), even with several workers.
 
 <hr>
 2016/09/09
