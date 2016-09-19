@@ -22,8 +22,8 @@ from PIL import Image
 cmds = [] 
 tmpdir = ''
 
-mapHeight =  500
-mapWidth = 500
+mapHeight =  400
+mapWidth = 400
 
 #==============================================================
 def number_of_workers():
@@ -88,7 +88,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	#shutil.rmtree(tmpdir)
+	shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
@@ -130,7 +130,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 		qualifiers = '/' + ('/').join(cmd.split(' ')[0].split('/')[1:])
 		print(qualifiers)
 		pyferret.run('set window/aspect=1')
-		pyferret.run('go colorbar_put -h 10 90 96 98 0.3 ' + qualifiers)
+		pyferret.run('go colorbar_put -h 10 90 95 98 0.4 ' + qualifiers)
 		pyferret.run('frame/format=PNG/transparent/xpixels=' + str(mapWidth) + '/file="' + tmpdir + '/key' + str(i) + '.png"')
 		im = Image.open(tmpdir + '/key' + str(i) + '.png')
 		box = (0, 0, mapWidth, mapHeight*0.12)		# crop 0.12 of the height of the image to get only colobar
@@ -189,7 +189,7 @@ def template_WMS_client():
     <style type='text/css'>
         html, body { font-family: 'arial' }
         .mapContainer { display: inline-block ; margin-left: 20px; margin-top: 10px;}
-        .cmd { font-size: 10px; }
+        .cmd { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width:  {{ mapWidth }}px; }
         .map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
     </style>
 </head>
@@ -198,7 +198,7 @@ def template_WMS_client():
 
 {% for cmd in cmds %}
 <div class='mapContainer'>
-   <div id='cmd{{ loop.index }}' class='cmd'>{{ cmd }}</div>
+   <div id='cmd{{ loop.index }}' class='cmd' title='{{ cmd }}'>{{ cmd }}</div>
    <div id='map{{ loop.index }}' class='map'></div>
    <img id='key{{ loop.index }}' src='skey{{ loop.index }}.png'></img>
 </div>
