@@ -14,10 +14,11 @@ from paste.request import parse_formvars
 import subprocess
 
 from jinja2 import Template
+import itertools
 
 #==============================================================
 # Global variables
-cmd = ''
+cmds = [] 
 tmpdir = ''
 
 #==============================================================
@@ -31,7 +32,8 @@ def handler_app(environ, start_response):
     fields = parse_formvars(environ)
     if environ['REQUEST_METHOD'] == 'GET':
         
-        CMDarr = cmd.split()
+        CMDarr = fields['CMD'].split()
+
         CMD = CMDarr[0]                             # get the ferret command to append needed qualifiers
         VARIABLE = ' '.join(CMDarr[1:])             # 1 variable or 3 variables as var2D, lon2D, lat2D for curvilinear grids
 
@@ -94,12 +96,16 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	master_pid = os.getpid()
 	print("---------> gunicorn master pid: ", master_pid)
 
+	nbMaps = len(cmds)
+	print(str(nbMaps) + ' maps to draw')
+	listSynchroMapsToSet = list(itertools.permutations(range(1,nbMaps+1), 2))
+
 	instance_WMS_Client = Template(template_WMS_client())
 	instance_NW_Package = Template(template_nw_package())
 	with open(tmpdir + "/index.html", "wb") as f:
-    		f.write(instance_WMS_Client.render(cmd=cmd, gunicornPID=master_pid))
+    		f.write(instance_WMS_Client.render(cmds=cmds, gunicornPID=master_pid, listSynchroMapsToSet=listSynchroMapsToSet))
 	with open(tmpdir + "/package.json", "wb") as f:
-    		f.write(instance_NW_Package.render())
+    		f.write(instance_NW_Package.render(nbMaps=nbMaps))
 	print("Temporary directory to remove: ", tmpdir)
 	
     	proc = subprocess.Popen(['nw', tmpdir])
@@ -128,11 +134,11 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	    sys.exit(1)
 
 #==============================================================
-def slippyMap(cmdRequested):
+def slippyMap(cmdsRequested):
 
-    global cmd 
+    global cmds 
 
-    cmd = cmdRequested
+    cmds = cmdsRequested.split(';')
 
     options = {
         'bind': '%s:%s' % ('127.0.0.1', '8000'),
@@ -157,68 +163,214 @@ def template_WMS_client():
 
     <style type="text/css">
         html, body { font-family: "arial" }
-        #cmd { font-size: 12px; margin-left: 50px; }
-        #map1 { float: left; width: 600px; height: 400px; margin-left: 50px; margin-top: 10px; }
+        .mapContainer { display: inline-block ; margin-left: 20px; margin-top: 10px;}
+        .cmd { font-size: 10px; }
+        .map { width: 400px; height: 400px; }
     </style>
 </head>
 
 <body>
 
-    <div id="cmd">{{ cmd }}</div>
-    <div id="map1"></div>
+{% for cmd in cmds %}
+<div class="mapContainer">
+   <div id="cmd{{ loop.index }}" class="cmd">{{ cmd }}</div>
+   <div id="map{{ loop.index }}" class="map"></div>
+</div>
+{% endfor %}
 
-    <script type="text/javascript">
+<script type="text/javascript">
+/*
+ * Extends L.Map to synchronize the interaction on one map to one or more other maps.
+ */
 
-    //===============================================
-    var crs = L.CRS.EPSG4326;
-    //var crs = L.CRS.EPSG3857;
+(function () {
+    var NO_ANIMATION = {
+        animate: false,
+        reset: true
+    };
 
-    //===============================================
-    // Only in EPSG:4326
-    var wmspyferret = L.tileLayer.wms("http://localhost:8000", {
-        crs: crs,
-    	format: 'image/png',
-    	transparent: true,
-    	attribution: 'pyferret',
-	uppercase: true
+    L.Map = L.Map.extend({
+        sync: function (map, options) {
+            this._initSync();
+            options = L.extend({
+                noInitialSync: false,
+                syncCursor: false,
+                syncCursorMarkerOptions: {
+                    radius: 10,
+                    fillOpacity: 0.3,
+                    color: '#da291c',
+                    fillColor: '#fff'
+                }
+            }, options);
+
+            // prevent double-syncing the map:
+            if (this._syncMaps.indexOf(map) === -1) {
+                this._syncMaps.push(map);
+            }
+
+            if (!options.noInitialSync) {
+                map.setView(this.getCenter(), this.getZoom(), NO_ANIMATION);
+            }
+            if (options.syncCursor) {
+                map.cursor = L.circleMarker([0, 0], options.syncCursorMarkerOptions).addTo(map);
+
+                this._cursors.push(map.cursor);
+
+                this.on('mousemove', this._cursorSyncMove, this);
+                this.on('mouseout', this._cursorSyncOut, this);
+            }
+            return this;
+        },
+
+        _cursorSyncMove: function (e) {
+            this._cursors.forEach(function (cursor) {
+                cursor.setLatLng(e.latlng);
+            });
+        },
+
+        _cursorSyncOut: function (e) {
+            this._cursors.forEach(function (cursor) {
+                // TODO: hide cursor in stead of moving to 0, 0
+                cursor.setLatLng([0, 0]);
+            });
+        },
+
+
+        // unsync maps from each other
+        unsync: function (map) {
+            var self = this;
+
+            if (this._syncMaps) {
+                this._syncMaps.forEach(function (synced, id) {
+                    if (map === synced) {
+                        self._syncMaps.splice(id, 1);
+                        if (map.cursor) {
+                            map.cursor.removeFrom(map);
+                        }
+                    }
+                });
+            }
+            this.off('mousemove', this._cursorSyncMove, this);
+            this.off('mouseout', this._cursorSyncOut, this);
+
+            return this;
+        },
+
+        // Checks if the maps is synced with anything
+        isSynced: function () {
+            return (this.hasOwnProperty('_syncMaps') && Object.keys(this._syncMaps).length > 0);
+        },
+
+        // overload methods on originalMap to replay interactions on _syncMaps;
+        _initSync: function () {
+            if (this._syncMaps) {
+                return;
+            }
+            var originalMap = this;
+
+            this._syncMaps = [];
+            this._cursors = [];
+
+            L.extend(originalMap, {
+                setView: function (center, zoom, options, sync) {
+                    if (!sync) {
+                        originalMap._syncMaps.forEach(function (toSync) {
+                            toSync.setView(center, zoom, options, true);
+                        });
+                    }
+                    return L.Map.prototype.setView.call(this, center, zoom, options);
+                },
+
+                panBy: function (offset, options, sync) {
+                    if (!sync) {
+                        originalMap._syncMaps.forEach(function (toSync) {
+                            toSync.panBy(offset, options, true);
+                        });
+                    }
+                    return L.Map.prototype.panBy.call(this, offset, options);
+                },
+
+                _onResize: function (event, sync) {
+                    if (!sync) {
+                        originalMap._syncMaps.forEach(function (toSync) {
+                            toSync._onResize(event, true);
+                        });
+                    }
+                    return L.Map.prototype._onResize.call(this, event);
+                }
+            });
+
+            originalMap.on('zoomend', function () {
+                originalMap._syncMaps.forEach(function (toSync) {
+                    toSync.setView(originalMap.getCenter(), originalMap.getZoom(), NO_ANIMATION);
+                });
+            }, this);
+
+            originalMap.dragging._draggable._updatePosition = function () {
+                L.Draggable.prototype._updatePosition.call(this);
+                var self = this;
+                originalMap._syncMaps.forEach(function (toSync) {
+                    L.DomUtil.setPosition(toSync.dragging._draggable._element, self._newPos);
+                    toSync.eachLayer(function (layer) {
+                        if (layer._google !== undefined) {
+                            layer._google.setCenter(originalMap.getCenter());
+                        }
+                    });
+                    toSync.fire('moveend');
+                });
+            };
+        }
     });
+})();
+</script>
 
-    //===============================================
-    // Following services are available in EPSG:4326 
-    //var layer = L.tileLayer('http://server.arcgisonline.com/ArcGis/rest/services/ESRI_StreetMap_World_2D/MapServer/tile/{z}/{y}/{x}');
-    //var layer = L.tileLayer('http://server.arcgisonline.com/ArcGis/rest/services/ESRI_Imagery_World_2D/MapServer/tile/{z}/{y}/{x}');
+<script type="text/javascript">
 
-    // Following services are available in EPSG:3857
-    //var layer = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}');
+//===============================================
+var crs = L.CRS.EPSG4326;
 
-    //===============================================
-    // Following service is available in EPSG:3857 and EPSG:4326
-    var frontiers = L.tileLayer.wms("http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms", {
-    	layers: 'GCA:GCA_frontiersCountryAndRegions',
-    	format: 'image/png',
-        crs: crs,
-    	transparent: true
-    });
+{% for cmd in cmds %}
+//===============================================
+var wmspyferret{{ loop.index }} = L.tileLayer.wms("http://localhost:8000", {
+	cmd: '{{ cmd }}',
+    	crs: crs,
+	format: 'image/png',
+	transparent: true,
+	attribution: 'pyferret',
+    	uppercase: true
+});
+var frontiers{{ loop.index }} = L.tileLayer.wms("http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms", {
+	layers: 'GCA:GCA_frontiersCountryAndRegions',
+	format: 'image/png',
+    	crs: crs,
+	transparent: true
+});
 
-    //===============================================
-    var map1 = L.map('map1', {
-        //layers: [layer, wmspyferret],
-        layers: [wmspyferret, frontiers],
-        crs: crs,
-        center: [0, 0],
-        zoom: 2 
-    });
+var map{{ loop.index }} = L.map('map{{ loop.index }}', {
+    layers: [wmspyferret{{ loop.index }}, frontiers{{ loop.index }}],
+    crs: crs,
+    center: [0, 0],
+    zoom: 2 
+});
+{% endfor %}
 
-    //===============================================
-    var exec = require('child_process').exec,child;
+//===============================================
+// Set up synchro between maps
+{% for synchro in listSynchroMapsToSet -%}
+map{{ synchro[0] }}.sync(map{{ synchro[1] }});
+{% endfor %}
 
-    process.stdout.write('Starting NW application\\n');
-    process.on('exit', function (){
-  	process.stdout.write('Exiting from NW application, now killing the gunicorn server\\n');
-  	process.kill({{ gunicornPID }});			// kill gunicorn server
-    });
+//===============================================
+var exec = require('child_process').exec,child;
 
-    </script>
+process.stdout.write('Starting NW application\\n');
+process.on('exit', function (){
+    process.stdout.write('Exiting from NW application, now killing the gunicorn server\\n');
+    process.kill({{ gunicornPID }});			// kill gunicorn server
+});
+
+</script>
+
 </body>
 </html>
 '''
@@ -232,7 +384,7 @@ def template_nw_package():
   "main": "index.html",
   "window": {
           "toolbar": false,
-          "width": 700,
+          "width": {{ nbMaps*400 + 100 }},
           "height": 500
           }
 }
