@@ -15,11 +15,15 @@ import subprocess
 
 from jinja2 import Template
 import itertools
+from PIL import Image
 
 #==============================================================
 # Global variables
 cmds = [] 
 tmpdir = ''
+
+mapHeight =  500
+mapWidth = 500
 
 #==============================================================
 def number_of_workers():
@@ -34,7 +38,7 @@ def handler_app(environ, start_response):
         
         CMDarr = fields['CMD'].split()
 
-        CMD = CMDarr[0]                             # get the ferret command to append needed qualifiers
+        CMD = CMDarr[0].strip()                     # get the ferret command to append needed qualifiers
         VARIABLE = ' '.join(CMDarr[1:])             # 1 variable or 3 variables as var2D, lon2D, lat2D for curvilinear grids
 
         HEIGHT = int(fields['HEIGHT'])
@@ -43,8 +47,8 @@ def handler_app(environ, start_response):
         # BBOX=xmin,ymin,xmax,ymax
         BBOX = fields['BBOX'].split(',')
 
-        hlim = "/hlim=" + BBOX[0] + ":" + BBOX[2]
-        vlim = "/vlim=" + BBOX[1] + ":" + BBOX[3]
+        hlim = '/hlim=' + BBOX[0] + ':' + BBOX[2]
+        vlim = '/vlim=' + BBOX[1] + ':' + BBOX[3]
 
         try:
 
@@ -52,38 +56,40 @@ def handler_app(environ, start_response):
         	pyferret.run('go margins 0 0 0 0')
 
 		# Dataset and variables definition need to be pass to workers (cannot be inherited from initial call)
-        	pyferret.run("use levitus_climatology")
-                pyferret.run(CMD +  "/x=-180:180/y=-90:90/noaxis/nolab/nokey" + hlim + vlim + " " + VARIABLE)
+        	pyferret.run('use levitus_climatology')
+                pyferret.run(CMD +  '/x=-180:180/y=-90:90/noaxis/nolab/nokey' + hlim + vlim + ' ' + VARIABLE)
         
 		# Curvilinear case to test with:
 		# python pyferretWMS_test.py 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_viridis VOTEMPER[k=1,l=1], NAV_LON, NAV_LAT'
-		#pyferret.run("use ORCA0.25_ex1.nc")
-                #pyferret.run(CMD +  "/modulo/noaxis/nolab/nokey" + hlim + vlim + " " + VARIABLE)
+		#pyferret.run('use ORCA0.25_ex1.nc')
+                #pyferret.run(CMD +  '/modulo/noaxis/nolab/nokey' + hlim + vlim + ' ' + VARIABLE)
        
                 tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
-                #pyferret.saveplot(tmpname, xpix=WIDTH, qual='/format=PNG/transparent')         # could be faster if saveplot would allow stringIO (ie buffer)
                 tmpname = os.path.basename(tmpname)
-                pyferret.run("frame/format=PNG/transparent/xpixels=" + str(WIDTH) + "/file=" + tmpname)
+                pyferret.run('frame/format=PNG/transparent/xpixels=' + str(WIDTH) + '/file="' + tmpdir + '/' + tmpname + '"')
 
-                if os.path.isfile(tmpname):
-                        ftmp = open(tmpname, "rb")
+                if os.path.isfile(tmpdir + '/' + tmpname):
+                        ftmp = open(tmpdir + '/' + tmpname, 'rb')
                         img = ftmp.read()
                         ftmp.close()
-                        os.remove(tmpname)
+                        os.remove(tmpdir + '/' + tmpname)
       
                 start_response('200 OK', [('content-type', 'image/png')])
                 return iter(img) 
     
         except:
-                return iter("Exception caught")
+                return iter('Exception caught')
 
 #==============================================================
 class myArbiter(gunicorn.arbiter.Arbiter):
 
     def halt(self):
+	# Close pyferret
         pyferret.stop()
-	print("Removing temporary directory: ", tmpdir)
-	shutil.rmtree(tmpdir)
+
+	print('Removing temporary directory: ', tmpdir)
+	#shutil.rmtree(tmpdir)
+
         super(myArbiter, self).halt()
 
 
@@ -93,8 +99,10 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
     def __init__(self, app, options=None):
 	global tmpdir
         tmpdir = tempfile.mkdtemp()
+	print('Temporary directory to remove: ', tmpdir)
+
 	master_pid = os.getpid()
-	print("---------> gunicorn master pid: ", master_pid)
+	print('---------> gunicorn master pid: ', master_pid)
 
 	nbMaps = len(cmds)
 	print(str(nbMaps) + ' maps to draw')
@@ -102,17 +110,33 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 
 	instance_WMS_Client = Template(template_WMS_client())
 	instance_NW_Package = Template(template_nw_package())
-	with open(tmpdir + "/index.html", "wb") as f:
-    		f.write(instance_WMS_Client.render(cmds=cmds, gunicornPID=master_pid, listSynchroMapsToSet=listSynchroMapsToSet))
-	with open(tmpdir + "/package.json", "wb") as f:
-    		f.write(instance_NW_Package.render(nbMaps=nbMaps))
-	print("Temporary directory to remove: ", tmpdir)
+	with open(tmpdir + '/index.html', 'wb') as f:
+    		f.write(instance_WMS_Client.render(cmds=cmds, gunicornPID=master_pid, listSynchroMapsToSet=listSynchroMapsToSet,
+						   mapWidth=mapWidth, mapHeight=mapHeight))
+	with open(tmpdir + '/package.json', 'wb') as f:
+    		f.write(instance_NW_Package.render(nbMaps=nbMaps,
+						   mapWidth=mapWidth, mapHeight=mapHeight))
 	
     	proc = subprocess.Popen(['nw', tmpdir])
     	print('Client nw process: ', proc.pid)
         self.options = options or {}
         self.application = app
+
+	# Start pyferret	
         pyferret.start(journal=False, unmapped=True, quiet=True)
+
+	for i,cmd in enumerate(cmds, start=1):
+		print(cmd)
+		qualifiers = '/' + ('/').join(cmd.split(' ')[0].split('/')[1:])
+		print(qualifiers)
+		pyferret.run('set window/aspect=1')
+		pyferret.run('go colorbar_put -h 10 90 96 98 0.3 ' + qualifiers)
+		pyferret.run('frame/format=PNG/transparent/xpixels=' + str(mapWidth) + '/file="' + tmpdir + '/key' + str(i) + '.png"')
+		im = Image.open(tmpdir + '/key' + str(i) + '.png')
+		box = (0, 0, mapWidth, mapHeight*0.12)		# crop 0.12 of the height of the image to get only colobar
+		area = im.crop(box)
+		area.save(tmpdir + '/skey' + str(i) + '.png', "PNG")
+
         super(StandaloneApplication, self).__init__()
 
     def load_config(self):
@@ -129,7 +153,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
         try:
             myArbiter(self).run()
         except RuntimeError as e:
-            print("\nError: %s\n" % e, file=sys.stderr)
+            print('\nError: %s\n' % e, file=sys.stderr)
             sys.stderr.flush()
 	    sys.exit(1)
 
@@ -138,7 +162,8 @@ def slippyMap(cmdsRequested):
 
     global cmds 
 
-    cmds = cmdsRequested.split(';')
+    cmds = cmdsRequested.split(';')		# get individual commands
+    cmds = map(str.strip, cmds)  		# remove surrounding spaces if present
 
     options = {
         'bind': '%s:%s' % ('127.0.0.1', '8000'),
@@ -155,30 +180,31 @@ def template_WMS_client():
 <!doctype html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta charset='utf-8'>
     <title>Slippy map with WMS from pyferret</title>
 
-    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.3/leaflet.css" />
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.3/leaflet.js"></script>
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.3/leaflet.css' />
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.3/leaflet.js'></script>
 
-    <style type="text/css">
-        html, body { font-family: "arial" }
+    <style type='text/css'>
+        html, body { font-family: 'arial' }
         .mapContainer { display: inline-block ; margin-left: 20px; margin-top: 10px;}
         .cmd { font-size: 10px; }
-        .map { width: 400px; height: 400px; }
+        .map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
     </style>
 </head>
 
 <body>
 
 {% for cmd in cmds %}
-<div class="mapContainer">
-   <div id="cmd{{ loop.index }}" class="cmd">{{ cmd }}</div>
-   <div id="map{{ loop.index }}" class="map"></div>
+<div class='mapContainer'>
+   <div id='cmd{{ loop.index }}' class='cmd'>{{ cmd }}</div>
+   <div id='map{{ loop.index }}' class='map'></div>
+   <img id='key{{ loop.index }}' src='skey{{ loop.index }}.png'></img>
 </div>
 {% endfor %}
 
-<script type="text/javascript">
+<script type='text/javascript'>
 /*
  * Extends L.Map to synchronize the interaction on one map to one or more other maps.
  */
@@ -324,14 +350,14 @@ def template_WMS_client():
 })();
 </script>
 
-<script type="text/javascript">
+<script type='text/javascript'>
 
 //===============================================
 var crs = L.CRS.EPSG4326;
 
 {% for cmd in cmds %}
 //===============================================
-var wmspyferret{{ loop.index }} = L.tileLayer.wms("http://localhost:8000", {
+var wmspyferret{{ loop.index }} = L.tileLayer.wms('http://localhost:8000', {
 	cmd: '{{ cmd }}',
     	crs: crs,
 	format: 'image/png',
@@ -339,7 +365,7 @@ var wmspyferret{{ loop.index }} = L.tileLayer.wms("http://localhost:8000", {
 	attribution: 'pyferret',
     	uppercase: true
 });
-var frontiers{{ loop.index }} = L.tileLayer.wms("http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms", {
+var frontiers{{ loop.index }} = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
 	layers: 'GCA:GCA_frontiersCountryAndRegions',
 	format: 'image/png',
     	crs: crs,
@@ -384,8 +410,8 @@ def template_nw_package():
   "main": "index.html",
   "window": {
           "toolbar": false,
-          "width": {{ nbMaps*400 + 100 }},
-          "height": 500
+          "width": {{ nbMaps*mapWidth + 100 }},
+          "height": {{ mapHeight + 100 }} 
           }
 }
 '''
