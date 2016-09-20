@@ -4,11 +4,15 @@ Patrick Brockmann - LSCE
 <hr>
 2016/09/20
 
+0.9.1 release
+
+An environment script is loaded from the master process. All datasets loaded and variables defined are
+then available from the different workers.
 Depending the number of commands separated by ; passed as argument, you can now get until 3 synchroneous maps
-with colorbars (keys) made from qualifiers requested.
+with colorbars (keys) made from qualifiers specified.
 
 ```
-Usage: pyferretWMS.py [--width=400] [--height=400] 'cmd; cmd'
+Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] 'cmd; cmd'
 
 Options:
   --version        show program's version number and exit

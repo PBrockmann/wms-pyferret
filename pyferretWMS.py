@@ -399,7 +399,7 @@ def template_nw_package():
 #==============================================================
 from optparse import OptionParser
 
-parser = OptionParser(usage="%prog [--width=400] [--height=400] 'cmd; cmd'", version="%prog 0.9.0")
+parser = OptionParser(usage="%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd; cmd'", version="%prog 0.9.0")
 parser.add_option("--width", type="int", dest="width", default=400, 
 		help="300 < map width <= 600")
 parser.add_option("--height", type="int", dest="height", default=400, 
