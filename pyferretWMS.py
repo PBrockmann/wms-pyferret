@@ -354,7 +354,6 @@ var wmspyferret{{ loop.index }} = L.tileLayer.wms('http://localhost:8000', {
     	crs: crs,
 	format: 'image/png',
 	transparent: true,
-	attribution: 'pyferret',
     	uppercase: true
 });
 var frontiers{{ loop.index }} = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
@@ -368,7 +367,8 @@ var map{{ loop.index }} = L.map('map{{ loop.index }}', {
     layers: [wmspyferret{{ loop.index }}, frontiers{{ loop.index }}],
     crs: crs,
     center: [0, 0],
-    zoom: 2 
+    zoom: 2,
+    attributionControl: false
 });
 {% endfor %}
 
