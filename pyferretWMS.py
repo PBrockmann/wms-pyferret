@@ -375,8 +375,8 @@ var frontiers{{ loop.index }} = L.tileLayer.wms('http://www.globalcarbonatlas.or
 var map{{ loop.index }} = L.map('map{{ loop.index }}', {
     layers: [wmspyferret{{ loop.index }}, frontiers{{ loop.index }}],
     crs: crs,
-    center: [0, 0],
-    zoom: 2,
+    center: [0, -40],
+    zoom: 1,
     attributionControl: false
 });
 {% endfor %}
