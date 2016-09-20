@@ -15,6 +15,9 @@ Options:
   -h, --help       show this help message and exit
   --width=WIDTH    300 < map width <= 600
   --height=HEIGHT  300 < map height <= 600
+  --env=ENVSCRIPT  ferret script to set the environment
+                   (default=pyferretWMS.jnl). It contains datasets to open,
+                   variables definition.
 
 Example:
 ./pyferretWMS.py 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_inferno temp[k=@max]; shade/lev=(-inf)(0,140,5)(inf)/pal=mpl_Seq1_RdPu temp[k=@var]; shade/lev=(-inf)(30,40,0.5)(inf)/pal=mpl_PSU_viridis salt[k=1]'

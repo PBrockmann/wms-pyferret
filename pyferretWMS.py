@@ -121,7 +121,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 		variable = ' '.join(cmd.split(' ')[1:])
 		print(cmd1, variable)
 		pyferret.run('set window/aspect=1')
-        	pyferret.run('use levitus_climatology')
+        	pyferret.run('go ' + envScript)			# load the environment (dataset to open + variables definition)
 		pyferret.run('go margins 2 4 3 3')
 		pyferret.run(cmd1 + '/set_up ' + variable)
 		pyferret.run('ppl shakey 1, 0, 0.15, , 3, 9, 1, `($vp_width)-1`, 1, 1.25 ; ppl shade')
@@ -400,17 +400,28 @@ def template_nw_package():
 from optparse import OptionParser
 
 parser = OptionParser(usage="%prog [--width=400] [--height=400] 'cmd; cmd'", version="%prog 0.9.0")
-parser.add_option("--width", type="int", dest="width", default=400, help="300 < map width <= 600")
-parser.add_option("--height", type="int", dest="height", default=400, help="300 < map height <= 600")
+parser.add_option("--width", type="int", dest="width", default=400, 
+		help="300 < map width <= 600")
+parser.add_option("--height", type="int", dest="height", default=400, 
+		help="300 < map height <= 600")
+parser.add_option("--env", dest="envScript", default="pyferretWMS.jnl", 
+		help="ferret script to set the environment (default=pyferretWMS.jnl). It contains datasets to open, variables definition.")
 
 (options, args) = parser.parse_args()
 
 if options.width < 300 or options.width > 600 or options.height < 300 or options.height > 600 :
+	print("\n=======> Error: map size options incorrect\n")
+	parser.print_help()
+	sys.exit(1)
+
+if not os.path.isfile(options.envScript):
+	print("\n=======> Error: Environment script option missing\n")
 	parser.print_help()
 	sys.exit(1)
 
 mapWidth =  options.width
 mapHeight = options.height
+envScript = options.envScript
 cmdsRequested = args[0]
 
 cmds = cmdsRequested.split(';')		# get individual commands
