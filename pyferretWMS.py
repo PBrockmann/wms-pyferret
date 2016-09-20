@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 from __future__ import print_function
 
@@ -17,18 +18,10 @@ from jinja2 import Template
 import itertools
 from PIL import Image
 
-#==============================================================
-# Global variables
-cmds = [] 
-tmpdir = ''
-
-mapHeight =  400
-mapWidth = 400
 
 #==============================================================
 def number_of_workers():
-    return (multiprocessing.cpu_count() * 2) + 1		# 	get "Error 13: Permission denied" on the dataset when more than 1 worker ??
-
+    return (multiprocessing.cpu_count() * 2) + 1
 
 #==============================================================
 def handler_app(environ, start_response):
@@ -88,7 +81,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	shutil.rmtree(tmpdir)
+	#shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
@@ -125,15 +118,19 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	# Start pyferret	
         pyferret.start(journal=False, unmapped=True, quiet=True)
 
+	# Produce colobars (keys) as 400x400 image
 	for i,cmd in enumerate(cmds, start=1):
-		print(cmd)
-		qualifiers = '/' + ('/').join(cmd.split(' ')[0].split('/')[1:])
-		print(qualifiers)
+		cmd1 = cmd.split(' ')[0]			# get command and variable to append /set_up qualifier
+		variable = ' '.join(cmd.split(' ')[1:])
+		print(cmd1, variable)
 		pyferret.run('set window/aspect=1')
-		pyferret.run('go colorbar_put -h 10 90 95 98 0.4 ' + qualifiers)
-		pyferret.run('frame/format=PNG/transparent/xpixels=' + str(mapWidth) + '/file="' + tmpdir + '/key' + str(i) + '.png"')
+        	pyferret.run('use levitus_climatology')
+		pyferret.run('go margins 2 4 3 3')
+		pyferret.run(cmd1 + '/set_up ' + variable)
+		pyferret.run('ppl shakey 1, 0, 0.15, , 3, 9, 1, `($vp_width)-1`, 1, 1.25 ; ppl shade')
+		pyferret.run('frame/format=PNG/transparent/xpixels=400/file="' + tmpdir + '/key' + str(i) + '.png"')
 		im = Image.open(tmpdir + '/key' + str(i) + '.png')
-		box = (0, 0, mapWidth, mapHeight*0.12)		# crop 0.12 of the height of the image to get only colobar
+		box = (0, 325, 400, 375)	
 		area = im.crop(box)
 		area.save(tmpdir + '/skey' + str(i) + '.png', "PNG")
 
@@ -158,22 +155,6 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	    sys.exit(1)
 
 #==============================================================
-def slippyMap(cmdsRequested):
-
-    global cmds 
-
-    cmds = cmdsRequested.split(';')		# get individual commands
-    cmds = map(str.strip, cmds)  		# remove surrounding spaces if present
-
-    options = {
-        'bind': '%s:%s' % ('127.0.0.1', '8000'),
-        'workers': number_of_workers(),
-        'worker_class': 'sync',
-        'threads': 1 
-    }
-    StandaloneApplication(handler_app, options).run()
-
-#==============================================================
 def template_WMS_client():
 
     return '''
@@ -191,6 +172,8 @@ def template_WMS_client():
         .mapContainer { display: inline-block ; margin-left: 20px; margin-top: 10px;}
         .cmd { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width:  {{ mapWidth }}px; }
         .map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
+        .key { text-align: center; margin: auto; }
+        .key img { width: {{ mapWidth }}px; height: auto; max-width: 400px; }
     </style>
 </head>
 
@@ -200,7 +183,7 @@ def template_WMS_client():
 <div class='mapContainer'>
    <div id='cmd{{ loop.index }}' class='cmd' title='{{ cmd }}'>{{ cmd }}</div>
    <div id='map{{ loop.index }}' class='map'></div>
-   <img id='key{{ loop.index }}' src='skey{{ loop.index }}.png'></img>
+   <div id='key{{ loop.index }}' class='key'><img src='skey{{ loop.index }}.png'></img></div>
 </div>
 {% endfor %}
 
@@ -415,3 +398,36 @@ def template_nw_package():
           }
 }
 '''
+
+#==============================================================
+from optparse import OptionParser
+
+parser = OptionParser(usage="%prog [--width=400] [--height=400] 'cmd; cmd'", version="%prog 0.9.0")
+parser.add_option("--width", type="int", dest="width", default=400, help="300 < map width <= 600")
+parser.add_option("--height", type="int", dest="height", default=400, help="300 < map height <= 600")
+
+(options, args) = parser.parse_args()
+
+if options.width < 300 or options.width > 600 or options.height < 300 or options.height > 600 :
+	parser.print_help()
+	sys.exit(1)
+
+mapWidth =  options.width
+mapHeight = options.height
+cmdsRequested = args[0]
+
+cmds = cmdsRequested.split(';')		# get individual commands
+cmds = map(str.strip, cmds)  		# remove surrounding spaces if present
+
+tmpdir = ''
+
+options = {
+    'bind': '%s:%s' % ('127.0.0.1', '8000'),
+    'workers': number_of_workers(),
+    'worker_class': 'sync',
+    'threads': 1 
+}
+StandaloneApplication(handler_app, options).run()
+
+sys.exit(1)
+
