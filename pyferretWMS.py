@@ -176,7 +176,7 @@ def template_WMS_client():
 <div class='mapContainer'>
    <div id='cmd{{ loop.index }}' class='cmd' title='{{ cmd }}'>{{ cmd }}</div>
    <div id='map{{ loop.index }}' class='map'></div>
-   <div id='key{{ loop.index }}' class='key'><img src='skey{{ loop.index }}.png' width='{{ mapWidth }}'></img></div>
+   <div id='key{{ loop.index }}' class='key'><img src='skey{{ loop.index }}.png'></img></div>
 </div>
 {% endfor %}
 
