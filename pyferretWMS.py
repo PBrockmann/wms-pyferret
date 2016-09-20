@@ -395,7 +395,7 @@ def template_nw_package():
 #==============================================================
 from optparse import OptionParser
 
-parser = OptionParser(usage="%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd; cmd'", version="%prog 0.9.1")
+parser = OptionParser(usage="%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'", version="%prog 0.9.1")
 parser.add_option("--width", type="int", dest="width", default=400, 
 		help="200 < map width <= 600")
 parser.add_option("--height", type="int", dest="height", default=400, 
@@ -405,13 +405,17 @@ parser.add_option("--env", dest="envScript", default="pyferretWMS.jnl",
 
 (options, args) = parser.parse_args()
 
+if len(args) != 1:
+        parser.error("wrong number of arguments")
+	parser.print_help()
+
 if options.width < 200 or options.width > 600 or options.height < 200 or options.height > 600 :
-	print("\n=======> Error: map size options incorrect\n")
+	parser.error("map size options incorrect")
 	parser.print_help()
 	sys.exit(1)
 
 if not os.path.isfile(options.envScript):
-	print("\n=======> Error: Environment script option missing\n")
+	parser.error("Environment script option missing")
 	parser.print_help()
 	sys.exit(1)
 
