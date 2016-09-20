@@ -35,17 +35,16 @@ Palettes used are available from: http://www.pmel.noaa.gov/maillists/tmap/ferret
 or from https://github.com/PBrockmann/fast
 
 Requirements:
- * pyferret
-Can be installed from usual way from http://ferret.pmel.noaa.gov/Ferret/downloads/pyferret/
+ * pyferret that can be installed from usual way from http://ferret.pmel.noaa.gov/Ferret/downloads/pyferret/
 or from conda-forge channel from https://anaconda.org/conda-forge/pyferret
- *  gunicorn (http://gunicorn.org) at 19.6.0 release to be installed from conda:
+ * gunicorn (http://gunicorn.org) at 19.6.0 release to be installed from conda:
 ```
 conda install gunicorn
 ```
- *  nwjs (http://nwjs.io/downloads/ choose LTS)
+ * nwjs (http://nwjs.io/downloads/), choose LTS.
 
 Notes:
- * on Mac OS X: nwjs should be renamed nw (or changed in pyferretWMS.py)
+ * on Mac OS X: nwjs should be renamed nw and accessible with the $PATH environment variable (or changed in pyferretWMS.py)
 
 <hr>
 2016/09/16
