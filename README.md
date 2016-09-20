@@ -22,6 +22,8 @@ Example:
 It produces
 ![Capture](https://github.com/PBrockmann/wms-pyferret/raw/master/capture_02.png)
 
+![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast_02.ogv)
+
 Palettes used are available from: http://www.pmel.noaa.gov/maillists/tmap/ferret_users/fu_2015/msg00475.html
 
 <hr>
