@@ -183,6 +183,14 @@ def template_WMS_client():
         .map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
         .key { text-align: center; margin: auto; }
         .key img { width: {{ mapWidth }}px; height: auto; max-width: 400px; }
+	.leaflet-bar a, .leaflet-bar a:hover {
+    		height: 16px;
+    		line-height: 16px;
+    		width: 16px;
+	}
+	.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+    		font: bold 16px "Lucida Console",Monaco,monospace;
+	}
     </style>
 </head>
 
