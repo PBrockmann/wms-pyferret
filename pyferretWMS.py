@@ -395,7 +395,12 @@ def template_nw_package():
 #==============================================================
 from optparse import OptionParser
 
-parser = OptionParser(usage="%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'", version="%prog 0.9.1")
+usage = "%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'\
+	\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to separate the variable from the command and it qualifiers)."
+version = "%prog 0.9.1"
+
+parser = OptionParser(usage=usage, version=version)
+
 parser.add_option("--width", type="int", dest="width", default=400, 
 		help="200 < map width <= 600")
 parser.add_option("--height", type="int", dest="height", default=400, 
