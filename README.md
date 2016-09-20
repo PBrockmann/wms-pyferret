@@ -12,13 +12,15 @@ Depending the number of commands separated by ; passed as argument, you can now 
 with colorbars (keys) made from qualifiers specified.
 
 ```
-Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] 'cmd; cmd'
+Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'
+
+'cmd/qualifiers variable' is a classic ferret call (no space allowed except to separate the variable from the command and it qualifiers).
 
 Options:
   --version        show program's version number and exit
   -h, --help       show this help message and exit
-  --width=WIDTH    300 < map width <= 600
-  --height=HEIGHT  300 < map height <= 600
+  --width=WIDTH    200 < map width <= 600
+  --height=HEIGHT  200 < map height <= 600
   --env=ENVSCRIPT  ferret script to set the environment
                    (default=pyferretWMS.jnl). It contains datasets to open,
                    variables definition.
