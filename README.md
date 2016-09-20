@@ -23,6 +23,7 @@ It produces
 ![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast.gif)
 
 Palettes used are available from: http://www.pmel.noaa.gov/maillists/tmap/ferret_users/fu_2015/msg00475.html
+or from https://github.com/PBrockmann/fast
 
 <hr>
 2016/09/16
