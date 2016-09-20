@@ -189,7 +189,8 @@ def template_WMS_client():
     		width: 16px;
 	}
 	.leaflet-control-zoom-in, .leaflet-control-zoom-out {
-    		font: bold 16px "Lucida Console",Monaco,monospace;
+    		font-size: 14px;
+		text-indent: 0px;
 	}
     </style>
 </head>
