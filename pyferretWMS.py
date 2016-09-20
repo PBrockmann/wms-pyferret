@@ -81,7 +81,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	#shutil.rmtree(tmpdir)
+	shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
