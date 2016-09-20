@@ -415,8 +415,8 @@ usage = "%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers v
 	"\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to separate the variable from the command and its qualifiers)." + \
 	"\nThe semi-colon character ';' is the separator between commands and will determine the number of maps to be drawn." + \
 	"\nThe qualifiers can include the title qualifier considering that the space character is not allowed since used to distinguish" + \
-	"\ncmd/qualifiers and the variable(s). For this, you can use the non-breaking space without the ending semi-colon: &nbsp" + \
-	"\nFor example: 'shade/lev=20/title=\"Simulation&nbspA\" varA; shade/lev=20/title=\"Simulation&nbspB\" varB"
+	"\ncmd/qualifiers and the variable(s). For this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon)." + \
+	"\nFor example: 'shade/lev=20/title=\"Simulation&nbspA\" varA; shade/lev=20/title=\"Simulation&nbspB\" varB'"
 version = "%prog 0.9.1"
 
 parser = OptionParser(usage=usage, version=version)
