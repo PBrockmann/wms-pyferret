@@ -8,7 +8,7 @@ Patrick Brockmann - LSCE
 
 An environment script is loaded from the master process. All datasets loaded and variables defined are
 then available from the different workers.
-Depending the number of commands separated by ; passed as argument, you can now get until 3 synchroneous maps
+Depending the number of commands separated by ; passed as argument, you can now get until 4 synchronous maps
 with colorbars (keys) made from qualifiers specified.
 
 ```

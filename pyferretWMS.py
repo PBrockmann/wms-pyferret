@@ -49,9 +49,7 @@ def handler_app(environ, start_response):
 
                 pyferret.run(CMD +  '/x=-180:180/y=-90:90/noaxis/nolab/nokey' + hlim + vlim + ' ' + VARIABLE)
         
-		# Curvilinear case to test with:
-		# python pyferretWMS_test.py 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_viridis VOTEMPER[k=1,l=1], NAV_LON, NAV_LAT'
-		#pyferret.run('use ORCA0.25_ex1.nc')
+		# Curvilinear case
                 #pyferret.run(CMD +  '/modulo/noaxis/nolab/nokey' + hlim + vlim + ' ' + VARIABLE)
        
                 tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
@@ -78,7 +76,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	shutil.rmtree(tmpdir)
+	#shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
@@ -94,8 +92,6 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	master_pid = os.getpid()
 	print('---------> gunicorn master pid: ', master_pid)
 
-	nbMaps = len(cmds)
-	print(str(nbMaps) + ' maps to draw')
 	listSynchroMapsToSet = list(itertools.permutations(range(1,nbMaps+1), 2))
 
 	instance_WMS_Client = Template(template_WMS_client())
@@ -159,14 +155,14 @@ def template_WMS_client():
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Slippy map with WMS from pyferret</title>
+    <title>Slippy maps with WMS from pyferret</title>
 
     <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.3/leaflet.css' />
     <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.3/leaflet.js'></script>
 
     <style type='text/css'>
         html, body { font-family: 'arial' }
-        .mapContainer { display: inline-block ; margin-left: 20px; margin-top: 10px;}
+        .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px;}
         .cmd { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width:  {{ mapWidth }}px; }
         .map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
         .key { text-align: center; margin: auto; }
@@ -180,7 +176,7 @@ def template_WMS_client():
 <div class='mapContainer'>
    <div id='cmd{{ loop.index }}' class='cmd' title='{{ cmd }}'>{{ cmd }}</div>
    <div id='map{{ loop.index }}' class='map'></div>
-   <div id='key{{ loop.index }}' class='key'><img src='skey{{ loop.index }}.png'></img></div>
+   <div id='key{{ loop.index }}' class='key'><img src='skey{{ loop.index }}.png' width='{{ mapWidth }}'></img></div>
 </div>
 {% endfor %}
 
@@ -386,11 +382,11 @@ def template_nw_package():
 
     return '''
 {
-  "name": "Slippy maps from pyferret",
+  "name": "Slippy maps with WMS from pyferret",
   "main": "index.html",
   "window": {
           "toolbar": false,
-          "width": {{ nbMaps*mapWidth + 100 }},
+          "width": {{ nbMaps*mapWidth + nbMaps*10 + 60 }},
           "height": {{ mapHeight + 100 }} 
           }
 }
@@ -426,6 +422,14 @@ cmdsRequested = args[0]
 
 cmds = cmdsRequested.split(';')		# get individual commands
 cmds = map(str.strip, cmds)  		# remove surrounding spaces if present
+
+nbMaps = len(cmds)
+print(str(nbMaps) + ' maps to draw')
+
+if nbMaps > 4:
+	print("\n=======> Error: Maximum number of maps: 4\n")
+	parser.print_help()
+	sys.exit(1)
 
 tmpdir = ''
 
