@@ -22,7 +22,7 @@ Example:
 It produces
 ![Capture](https://github.com/PBrockmann/wms-pyferret/raw/master/capture_02.png)
 
-![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast_02.ogv)
+![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast_02.mp4)
 
 Palettes used are available from: http://www.pmel.noaa.gov/maillists/tmap/ferret_users/fu_2015/msg00475.html
 
@@ -65,8 +65,6 @@ Moreover, considering that nowdays models are becoming incredibily refined with 
 That makes the pan/zoom navigation even more useful.
 
 ![Capture](https://github.com/PBrockmann/wms-pyferret/raw/master/capture_01.png)
-
-![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast_01.mkv)
 
 Next steps:
 - Read variables and start the gunicorn server directly from pyferret ([Custom Application](http://docs.gunicorn.org/en/stable/custom.html)).
