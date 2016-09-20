@@ -47,8 +47,6 @@ def handler_app(environ, start_response):
         	pyferret.run('set window/outline=5/aspect=1')           # outline=5 is a strange setting but works otherwise get outline around polygons
         	pyferret.run('go margins 0 0 0 0')
 
-		# Dataset and variables definition need to be pass to workers (cannot be inherited from initial call)
-        	pyferret.run('use levitus_climatology')
                 pyferret.run(CMD +  '/x=-180:180/y=-90:90/noaxis/nolab/nokey' + hlim + vlim + ' ' + VARIABLE)
         
 		# Curvilinear case to test with:
