@@ -18,7 +18,6 @@ from jinja2 import Template
 import itertools
 from PIL import Image
 
-
 #==============================================================
 def number_of_workers():
     return (multiprocessing.cpu_count() * 2) + 1
@@ -118,7 +117,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	# Start pyferret	
         pyferret.start(journal=False, unmapped=True, quiet=True)
 
-	# Produce colobars (keys) as 400x400 image
+	# Produce colobars (keys) from a crop on a 400x400 image
 	for i,cmd in enumerate(cmds, start=1):
 		cmd1 = cmd.split(' ')[0]			# get command and variable to append /set_up qualifier
 		variable = ' '.join(cmd.split(' ')[1:])
