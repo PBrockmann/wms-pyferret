@@ -62,8 +62,6 @@ Slippy maps avoid the command-line typing and display loops and hopefully will h
 Moreover, considering that nowdays models are becoming incredibily refined with sometimes resolutions at 1/12°.
 That makes the pan/zoom navigation even more useful.
 
-![Capture](https://github.com/PBrockmann/wms-pyferret/raw/master/capture_01.png)
-
 Next steps:
 - Read variables and start the gunicorn server directly from pyferret ([Custom Application](http://docs.gunicorn.org/en/stable/custom.html)).
 - Propose synchronous maps when 2 (or more) variables are requested to allow direct spatial intercomparison.
