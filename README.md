@@ -36,16 +36,13 @@ or from https://github.com/PBrockmann/fast
 
 Requirements:
  * pyferret
-
 Can be installed from usual way from http://ferret.pmel.noaa.gov/Ferret/downloads/pyferret/
 or from conda-forge channel from https://anaconda.org/conda-forge/pyferret
-
- *  nwjs (http://nwjs.io/downloads/ choose LTS)
-
  *  gunicorn (http://gunicorn.org) at 19.6.0 release to be installed from conda:
 ```
 conda install gunicorn
 ```
+ *  nwjs (http://nwjs.io/downloads/ choose LTS)
 
 Notes:
  * on Mac OS X: nwjs should be renamed nw (or changed in pyferretWMS.py)
