@@ -8,6 +8,7 @@ import gunicorn.app.base
 from gunicorn.six import iteritems
 
 import os, sys
+import re
 import shutil
 import tempfile
 import pyferret
@@ -96,8 +97,23 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 
 	instance_WMS_Client = Template(template_WMS_client())
 	instance_NW_Package = Template(template_nw_package())
+
+	# Inspect commands to get /title qualifier if present
+	titles = []
+	for i,cmd in enumerate(cmds, start=1):
+		cmd1 = cmd.split(' ')[0]			# get command and variable to append /set_up qualifier
+		variable = ' '.join(cmd.split(' ')[1:])
+		m = re.search('/title="(.*)"', cmd1)
+		if m:
+			title = m.group(1)
+			titles.append(title)
+		else:
+			titles.append(cmd)
+	titles = zip(cmds, titles)		# list of tuples to have both cmd and title with jinja and {% for cmd, title in titles %}
+
 	with open(tmpdir + '/index.html', 'wb') as f:
-    		f.write(instance_WMS_Client.render(cmds=cmds, gunicornPID=master_pid, listSynchroMapsToSet=listSynchroMapsToSet,
+    		f.write(instance_WMS_Client.render(cmds=cmds, titles=titles, gunicornPID=master_pid, 
+						   listSynchroMapsToSet=listSynchroMapsToSet,
 						   mapWidth=mapWidth, mapHeight=mapHeight))
 	with open(tmpdir + '/package.json', 'wb') as f:
     		f.write(instance_NW_Package.render(nbMaps=nbMaps,
@@ -163,7 +179,7 @@ def template_WMS_client():
     <style type='text/css'>
         html, body { font-family: 'arial' }
         .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px;}
-        .cmd { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width:  {{ mapWidth }}px; }
+        .title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width:  {{ mapWidth }}px; }
         .map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
         .key { text-align: center; margin: auto; }
         .key img { width: {{ mapWidth }}px; height: auto; max-width: 400px; }
@@ -172,9 +188,9 @@ def template_WMS_client():
 
 <body>
 
-{% for cmd in cmds %}
+{% for cmd, title in titles %}
 <div class='mapContainer'>
-   <div id='cmd{{ loop.index }}' class='cmd' title='{{ cmd }}'>{{ cmd }}</div>
+   <div id='title{{ loop.index }}' class='title' title='{{ cmd }}'>{{ title }}</div>
    <div id='map{{ loop.index }}' class='map'></div>
    <div id='key{{ loop.index }}' class='key'><img src='skey{{ loop.index }}.png'></img></div>
 </div>
@@ -395,8 +411,12 @@ def template_nw_package():
 #==============================================================
 from optparse import OptionParser
 
-usage = "%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'\
-	\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to separate the variable from the command and it qualifiers)."
+usage = "%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'" + \
+	"\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to separate the variable from the command and its qualifiers)." + \
+	"\nThe semi-colon character ';' is the separator between commands and will determine the number of maps to be drawn." + \
+	"\nThe qualifiers can include the title qualifier considering that the space character is not allowed since used to distinguish" + \
+	"\ncmd/qualifiers and the variable(s). For this, you can use the non-breaking space without the ending semi-colon: &nbsp" + \
+	"\nFor example: 'shade/lev=20/title=\"Simulation&nbspA\" varA; shade/lev=20/title=\"Simulation&nbspB\" varB"
 version = "%prog 0.9.1"
 
 parser = OptionParser(usage=usage, version=version)

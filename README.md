@@ -14,7 +14,11 @@ with colorbars (keys) made from qualifiers specified.
 ```
 Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'
 
-'cmd/qualifiers variable' is a classic ferret call (no space allowed except to separate the variable from the command and it qualifiers).
+'cmd/qualifiers variable' is a classic ferret call (no space allowed except to separate the variable from the command and its qualifiers).
+The semi-colon character ';' is the separator between commands and will determine the number of maps to be drawn.
+The qualifiers can include the title qualifier considering that the space character is not allowed since used to distinguish
+cmd/qualifiers and the variable(s). For this, you can use the non-breaking space without the ending semi-colon: &nbsp
+For example: 'shade/lev=20/title="Simulation&nbspA" varA; shade/lev=20/title="Simulation&nbspB" varB
 
 Options:
   --version        show program's version number and exit
