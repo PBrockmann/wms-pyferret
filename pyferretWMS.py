@@ -399,17 +399,17 @@ def template_nw_package():
 #==============================================================
 from optparse import OptionParser
 
-parser = OptionParser(usage="%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd; cmd'", version="%prog 0.9.0")
+parser = OptionParser(usage="%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd; cmd'", version="%prog 0.9.1")
 parser.add_option("--width", type="int", dest="width", default=400, 
-		help="300 < map width <= 600")
+		help="200 < map width <= 600")
 parser.add_option("--height", type="int", dest="height", default=400, 
-		help="300 < map height <= 600")
+		help="200 < map height <= 600")
 parser.add_option("--env", dest="envScript", default="pyferretWMS.jnl", 
 		help="ferret script to set the environment (default=pyferretWMS.jnl). It contains datasets to open, variables definition.")
 
 (options, args) = parser.parse_args()
 
-if options.width < 300 or options.width > 600 or options.height < 300 or options.height > 600 :
+if options.width < 200 or options.width > 600 or options.height < 200 or options.height > 600 :
 	print("\n=======> Error: map size options incorrect\n")
 	parser.print_help()
 	sys.exit(1)
