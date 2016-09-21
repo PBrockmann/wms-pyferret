@@ -4,8 +4,6 @@ Patrick Brockmann - LSCE
 <hr>
 2016/09/20
 
-0.9.1 release
-
 An environment script is loaded from the master process. All datasets loaded and variables defined are
 then available from the different workers.
 Depending the number of commands separated by ; passed as argument, you can now get until 4 synchronous maps
