@@ -50,7 +50,7 @@ conda install gunicorn
 ```
 * **nwjs** (http://nwjs.io/downloads/), choose LTS.
 
-Notes:
+####Installation notes:
 * on Mac OS X: nwjs should be renamed nw and accessible with the $PATH environment variable (or changed in pyferretWMS.py)
 
 ####Releases notes
