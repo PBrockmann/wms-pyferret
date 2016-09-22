@@ -27,7 +27,7 @@ Options:
   --zoom=ZOOM      Initial zoom of maps (default=1)
 ```
 
-Examples:
+=== Examples: ===
  * Using the levitus climatology dataset:
 ```./pyferretWMS.py 'shade/x=-180:180/y=-90:90/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_inferno temp[k=@max]; shade/x=-180:180/y=-90:90/lev=(-inf)(0,140,5)(inf)/pal=mpl_Seq1_RdPu temp[k=@var]; shade/x=-180:180/y=-90:90/lev=(-inf)(30,40,0.5)(inf)/pal=mpl_PSU_viridis salt[k=1]'```
 
@@ -41,7 +41,7 @@ Examples:
 Palettes used are available from: http://www.pmel.noaa.gov/maillists/tmap/ferret_users/fu_2015/msg00475.html
 or from https://github.com/PBrockmann/fast
 
-Requirements:
+=== Requirements: ===
  * **pyferret** that can be installed from usual way from http://ferret.pmel.noaa.gov/Ferret/downloads/pyferret/
 or from conda-forge channel from https://anaconda.org/conda-forge/pyferret
  * **gunicorn** (http://gunicorn.org) at 19.6.0 release to be installed from conda:
@@ -53,6 +53,7 @@ conda install gunicorn
 Notes:
  * on Mac OS X: nwjs should be renamed nw and accessible with the $PATH environment variable (or changed in pyferretWMS.py)
 
+==== Releases notes ====
 <hr>
 2016/09/21
 
