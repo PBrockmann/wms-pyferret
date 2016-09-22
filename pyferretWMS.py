@@ -74,7 +74,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	#shutil.rmtree(tmpdir)
+	shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
@@ -94,12 +94,10 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	for i,cmd in enumerate(cmds, start=1):
 		cmd1 = cmd.split(' ')[0]			# get command and variable to append /set_up qualifier
 		variable = ' '.join(cmd.split(' ')[1:])
-		print(cmd1, variable)
 		pyferret.run('set window/aspect=1')
         	pyferret.run('go ' + envScript)			# load the environment (dataset to open + variables definition)
 		pyferret.run('go margins 2 4 3 3')
 		pyferret.run(cmd1 + '/set_up ' + variable)
-		print(cmd1 + '/set_up ' + variable)
 		pyferret.run('ppl shakey 1, 0, 0.15, , 3, 9, 1, `($vp_width)-1`, 1, 1.25 ; ppl shade')
 		pyferret.run('frame/format=PNG/transparent/xpixels=400/file="' + tmpdir + '/key' + str(i) + '.png"')
 		im = Image.open(tmpdir + '/key' + str(i) + '.png')
