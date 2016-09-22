@@ -1,7 +1,7 @@
 
 Patrick Brockmann - LSCE
 
-**Display synchronous slippy maps from ferret variables**
+####Display synchronous slippy maps from ferret variables
 
 ```
 Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] [--zoom=1]
@@ -28,12 +28,12 @@ Options:
 ```
 
 ####Examples:
- * Using the levitus climatology dataset:
+* Using the levitus climatology dataset:
 ```./pyferretWMS.py 'shade/x=-180:180/y=-90:90/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_inferno temp[k=@max]; shade/x=-180:180/y=-90:90/lev=(-inf)(0,140,5)(inf)/pal=mpl_Seq1_RdPu temp[k=@var]; shade/x=-180:180/y=-90:90/lev=(-inf)(30,40,0.5)(inf)/pal=mpl_PSU_viridis salt[k=1]'```
 
 ![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast.gif)
 
- * Using a NEMO configuration (curvilinear grid) focussed on Mediterranean sea:
+* Using a NEMO configuration (curvilinear grid) focussed on Mediterranean sea:
 ```./pyferretWMS.py --zoom 3 --center [40,15] --width 500 --env MED8.jnl 'shade/lev=20v/pal=mpl_PSU_inferno/title="O2" O2, nav_lon, nav_lat; shade/lev=20v/pal=mpl_PSU_viridis/title="NO3" NO3, nav_lon, nav_lat'```
 
 ![Capture](https://github.com/PBrockmann/wms-pyferret/raw/master/capture.png)
@@ -42,16 +42,16 @@ Palettes used are available from: http://www.pmel.noaa.gov/maillists/tmap/ferret
 or from https://github.com/PBrockmann/fast
 
 ####Requirements:
- * **pyferret** that can be installed from usual way from http://ferret.pmel.noaa.gov/Ferret/downloads/pyferret/
+* **pyferret** that can be installed from usual way from http://ferret.pmel.noaa.gov/Ferret/downloads/pyferret/
 or from conda-forge channel from https://anaconda.org/conda-forge/pyferret
- * **gunicorn** (http://gunicorn.org) at 19.6.0 release to be installed from conda:
+* **gunicorn** (http://gunicorn.org) at 19.6.0 release to be installed from conda:
 ```
 conda install gunicorn
 ```
- * **nwjs** (http://nwjs.io/downloads/), choose LTS.
+* **nwjs** (http://nwjs.io/downloads/), choose LTS.
 
 Notes:
- * on Mac OS X: nwjs should be renamed nw and accessible with the $PATH environment variable (or changed in pyferretWMS.py)
+* on Mac OS X: nwjs should be renamed nw and accessible with the $PATH environment variable (or changed in pyferretWMS.py)
 
 ####Releases notes
 <hr>
@@ -115,8 +115,7 @@ Examples of calls:
 - ```./slippy_map.bash 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_viridis temp[k=@max]'```
 - ```./slippy_map.bash 'shade/lev=(-inf)(30,40,1)(inf)/pal=mpl_PSU_inferno salt[k=1]'```
 
-<hr>
-Work based on:
+####Work based on:
 - [OpenGIS® Web Map Service Interface Standard (WMS)] (http://www.opengeospatial.org/standards/wms)
 - [pyferret] (http://ferret.pmel.noaa.gov/Ferret/documentation/pyferret)
 - [gunicorn: a Python WSGI HTTP Server] (http://gunicorn.org)
