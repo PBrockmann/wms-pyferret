@@ -48,11 +48,8 @@ def handler_app(environ, start_response):
         	pyferret.run('set window/outline=5/aspect=1')           # outline=5 is a strange setting but works otherwise get outline around polygons
         	pyferret.run('go margins 0 0 0 0')
 
-                pyferret.run(CMD +  '/x=-180:180/y=-90:90/noaxis/nolab/nokey' + hlim + vlim + ' ' + VARIABLE)
+                pyferret.run(CMD +  '/noaxis/nolab/nokey' + hlim + vlim + ' ' + VARIABLE)
         
-		# Curvilinear case
-                #pyferret.run(CMD +  '/modulo/noaxis/nolab/nokey' + hlim + vlim + ' ' + VARIABLE)
-       
                 tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
                 tmpname = os.path.basename(tmpname)
                 pyferret.run('frame/format=PNG/transparent/xpixels=' + str(WIDTH) + '/file="' + tmpdir + '/' + tmpname + '"')
@@ -77,7 +74,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	shutil.rmtree(tmpdir)
+	#shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
@@ -89,6 +86,26 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	global tmpdir
         tmpdir = tempfile.mkdtemp()
 	print('Temporary directory to remove: ', tmpdir)
+
+	# Start pyferret	
+        pyferret.start(journal=False, unmapped=True, quiet=True)
+
+	# Produce colobars (keys) from a crop on a 400x400 image
+	for i,cmd in enumerate(cmds, start=1):
+		cmd1 = cmd.split(' ')[0]			# get command and variable to append /set_up qualifier
+		variable = ' '.join(cmd.split(' ')[1:])
+		print(cmd1, variable)
+		pyferret.run('set window/aspect=1')
+        	pyferret.run('go ' + envScript)			# load the environment (dataset to open + variables definition)
+		pyferret.run('go margins 2 4 3 3')
+		pyferret.run(cmd1 + '/set_up ' + variable)
+		print(cmd1 + '/set_up ' + variable)
+		pyferret.run('ppl shakey 1, 0, 0.15, , 3, 9, 1, `($vp_width)-1`, 1, 1.25 ; ppl shade')
+		pyferret.run('frame/format=PNG/transparent/xpixels=400/file="' + tmpdir + '/key' + str(i) + '.png"')
+		im = Image.open(tmpdir + '/key' + str(i) + '.png')
+		box = (0, 325, 400, 375)	
+		area = im.crop(box)
+		area.save(tmpdir + '/skey' + str(i) + '.png', "PNG")
 
 	master_pid = os.getpid()
 	print('---------> gunicorn master pid: ', master_pid)
@@ -114,34 +131,17 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	with open(tmpdir + '/index.html', 'wb') as f:
     		f.write(instance_WMS_Client.render(cmds=cmds, titles=titles, gunicornPID=master_pid, 
 						   listSynchroMapsToSet=listSynchroMapsToSet,
-						   mapWidth=mapWidth, mapHeight=mapHeight))
+						   mapWidth=mapWidth, mapHeight=mapHeight, 
+						   mapCenter=mapCenter, mapZoom=mapZoom))
 	with open(tmpdir + '/package.json', 'wb') as f:
     		f.write(instance_NW_Package.render(nbMaps=nbMaps,
 						   mapWidth=mapWidth, mapHeight=mapHeight))
-	
+
+	# Launch NW.js
     	proc = subprocess.Popen(['nw', tmpdir])
     	print('Client nw process: ', proc.pid)
         self.options = options or {}
         self.application = app
-
-	# Start pyferret	
-        pyferret.start(journal=False, unmapped=True, quiet=True)
-
-	# Produce colobars (keys) from a crop on a 400x400 image
-	for i,cmd in enumerate(cmds, start=1):
-		cmd1 = cmd.split(' ')[0]			# get command and variable to append /set_up qualifier
-		variable = ' '.join(cmd.split(' ')[1:])
-		print(cmd1, variable)
-		pyferret.run('set window/aspect=1')
-        	pyferret.run('go ' + envScript)			# load the environment (dataset to open + variables definition)
-		pyferret.run('go margins 2 4 3 3')
-		pyferret.run(cmd1 + '/set_up ' + variable)
-		pyferret.run('ppl shakey 1, 0, 0.15, , 3, 9, 1, `($vp_width)-1`, 1, 1.25 ; ppl shade')
-		pyferret.run('frame/format=PNG/transparent/xpixels=400/file="' + tmpdir + '/key' + str(i) + '.png"')
-		im = Image.open(tmpdir + '/key' + str(i) + '.png')
-		box = (0, 325, 400, 375)	
-		area = im.crop(box)
-		area.save(tmpdir + '/skey' + str(i) + '.png', "PNG")
 
         super(StandaloneApplication, self).__init__()
 
@@ -375,8 +375,8 @@ var frontiers{{ loop.index }} = L.tileLayer.wms('http://www.globalcarbonatlas.or
 var map{{ loop.index }} = L.map('map{{ loop.index }}', {
     layers: [wmspyferret{{ loop.index }}, frontiers{{ loop.index }}],
     crs: crs,
-    center: [0, -40],
-    zoom: 1,
+    center: {{ mapCenter }},
+    zoom: {{ mapZoom }},
     attributionControl: false
 });
 {% endfor %}
@@ -420,7 +420,8 @@ def template_nw_package():
 #==============================================================
 from optparse import OptionParser
 
-usage = "%prog [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'" + \
+usage = "%prog [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] [--zoom=1]" + \
+	"\n                              'cmd/qualifiers variable; cmd/qualifiers variable'" + \
 	"\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to separate the variable from the command and its qualifiers)." + \
 	"\nThe semi-colon character ';' is the separator between commands and will determine the number of maps to be drawn." + \
 	"\nThe qualifiers can include the title qualifier considering that the space character is not allowed since used to distinguish" + \
@@ -436,6 +437,10 @@ parser.add_option("--height", type="int", dest="height", default=400,
 		help="200 < map height <= 600")
 parser.add_option("--env", dest="envScript", default="pyferretWMS.jnl", 
 		help="ferret script to set the environment (default=pyferretWMS.jnl). It contains datasets to open, variables definition.")
+parser.add_option("--center", type="string", dest="center", default='[0,-40]', 
+		help="Initial center of maps as [lat, lon] (default=[0,-40])")
+parser.add_option("--zoom", type="int", dest="zoom", default=1, 
+		help="Initial zoom of maps (default=1)")
 
 (options, args) = parser.parse_args()
 
@@ -455,6 +460,8 @@ if not os.path.isfile(options.envScript):
 
 mapWidth =  options.width
 mapHeight = options.height
+mapCenter = options.center
+mapZoom = options.zoom
 envScript = options.envScript
 cmdsRequested = args[0]
 
