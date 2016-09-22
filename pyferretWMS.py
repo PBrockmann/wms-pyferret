@@ -88,7 +88,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	print('Temporary directory to remove: ', tmpdir)
 
 	# Start pyferret	
-        pyferret.start(journal=False, unmapped=True, quiet=True)
+        pyferret.start(journal=False, unmapped=True, quiet=True, verify=False)
 
 	# Produce colobars (keys) from a crop on a 400x400 image
 	for i,cmd in enumerate(cmds, start=1):
