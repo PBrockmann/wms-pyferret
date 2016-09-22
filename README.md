@@ -1,14 +1,6 @@
 
 Patrick Brockmann - LSCE
 
-<hr>
-2016/09/20
-
-An environment script is loaded from the master process. All datasets loaded and variables defined are
-then available from the different workers.
-Depending the number of commands separated by ; passed as argument, you can now get until 4 synchronous maps
-with colorbars (keys) made from qualifiers specified.
-
 ```
 Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'
 
@@ -50,6 +42,21 @@ conda install gunicorn
 
 Notes:
  * on Mac OS X: nwjs should be renamed nw and accessible with the $PATH environment variable (or changed in pyferretWMS.py)
+
+<hr>
+2016/09/21
+
+ * Add map center and zoom option
+ * Change call to allow curvilinear grid plot (shade command with 3 arguments) 
+
+
+<hr>
+2016/09/20
+
+An environment script is loaded from the master process. All datasets loaded and variables defined are
+then available from the different workers.
+Depending the number of commands separated by ; passed as argument, you can now get until 4 synchronous maps
+with colorbars (keys) made from qualifiers specified.
 
 <hr>
 2016/09/16
