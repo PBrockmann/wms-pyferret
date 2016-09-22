@@ -1,6 +1,8 @@
 
 Patrick Brockmann - LSCE
 
+**Display synchronous slippy maps from ferret variables**
+
 ```
 Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'
 
@@ -109,6 +111,7 @@ Examples of calls:
 - ```./slippy_map.bash 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_viridis temp[k=@max]'```
 - ```./slippy_map.bash 'shade/lev=(-inf)(30,40,1)(inf)/pal=mpl_PSU_inferno salt[k=1]'```
 
+<hr>
 Work based on:
 - [OpenGIS® Web Map Service Interface Standard (WMS)] (http://www.opengeospatial.org/standards/wms)
 - [pyferret] (http://ferret.pmel.noaa.gov/Ferret/documentation/pyferret)
