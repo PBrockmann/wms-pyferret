@@ -27,7 +27,7 @@ Options:
   --zoom=ZOOM      Initial zoom of maps (default=1)
 ```
 
-=== Examples: ===
+### Examples: ### 
  * Using the levitus climatology dataset:
 ```./pyferretWMS.py 'shade/x=-180:180/y=-90:90/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_inferno temp[k=@max]; shade/x=-180:180/y=-90:90/lev=(-inf)(0,140,5)(inf)/pal=mpl_Seq1_RdPu temp[k=@var]; shade/x=-180:180/y=-90:90/lev=(-inf)(30,40,0.5)(inf)/pal=mpl_PSU_viridis salt[k=1]'```
 
