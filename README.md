@@ -4,7 +4,8 @@ Patrick Brockmann - LSCE
 **Display synchronous slippy maps from ferret variables**
 
 ```
-Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] 'cmd/qualifiers variable; cmd/qualifiers variable'
+Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] [--zoom=1]
+                              'cmd/qualifiers variable; cmd/qualifiers variable'
 
 'cmd/qualifiers variable' is a classic ferret call (no space allowed except to separate the variable from the command and its qualifiers).
 The semi-colon character ';' is the separator between commands and will determine the number of maps to be drawn.
@@ -20,13 +21,15 @@ Options:
   --env=ENVSCRIPT  ferret script to set the environment
                    (default=pyferretWMS.jnl). It contains datasets to open,
                    variables definition.
+  --center=CENTER  Initial center of maps as [lat, lon] (default=[0,-40])
+  --zoom=ZOOM      Initial zoom of maps (default=1)
+```
 
 Examples:
- * ./pyferretWMS.py 'shade/x=-180:180/y=-90:90/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_inferno temp[k=@max]; shade/x=-180:180/y=-90:90/lev=(-inf)(0,140,5)(inf)/pal=mpl_Seq1_RdPu temp[k=@var]; shade/x=-180:180/y=-90:90/lev=(-inf)(30,40,0.5)(inf)/pal=mpl_PSU_viridis salt[k=1]'
+ * ```./pyferretWMS.py 'shade/x=-180:180/y=-90:90/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_inferno temp[k=@max]; shade/x=-180:180/y=-90:90/lev=(-inf)(0,140,5)(inf)/pal=mpl_Seq1_RdPu temp[k=@var]; shade/x=-180:180/y=-90:90/lev=(-inf)(30,40,0.5)(inf)/pal=mpl_PSU_viridis salt[k=1]'```
 
- * ./pyferretWMS.py --zoom 3 --center [40,15] --width 500 --env MED.jnl 'shade/lev=20v/pal=mpl_PSU_inferno/title="O2" O2, nav_lon, nav_lat; shade/lev=20v/pal=mpl_PSU_viridis/title="NO3" NO3, nav_lon, nav_lat'
+ * ```./pyferretWMS.py --zoom 3 --center [40,15] --width 500 --env MED.jnl 'shade/lev=20v/pal=mpl_PSU_inferno/title="O2" O2, nav_lon, nav_lat; shade/lev=20v/pal=mpl_PSU_viridis/title="NO3" NO3, nav_lon, nav_lat'```
 
-```
 A screencast
 ![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast.gif)
 
