@@ -33,7 +33,7 @@ Options:
 
 ![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast.gif)
 
-* Using a NEMO configuration (curvilinear grid) focussed on Mediterranean sea:
+* Using a NEMO configuration (curvilinear grid) focussed on the Mediterranean sea:
 ```./pyferretWMS.py --zoom 3 --center [40,15] --width 500 --env MED8.jnl 'shade/lev=20v/pal=mpl_PSU_inferno/title="O2" O2, nav_lon, nav_lat; shade/lev=20v/pal=mpl_PSU_viridis/title="NO3" NO3, nav_lon, nav_lat'```
 
 ![Capture](https://github.com/PBrockmann/wms-pyferret/raw/master/capture.png)
@@ -42,13 +42,13 @@ Palettes used are available from: http://www.pmel.noaa.gov/maillists/tmap/ferret
 or from https://github.com/PBrockmann/fast
 
 ####Requirements
-* **pyferret** that can be installed from usual way from http://ferret.pmel.noaa.gov/Ferret/downloads/pyferret/
-or from conda-forge channel from https://anaconda.org/conda-forge/pyferret
-* **gunicorn** (http://gunicorn.org) at 19.6.0 release to be installed from conda:
+* **pyferret** which can be installed in the usual way from http://ferret.pmel.noaa.gov/Ferret/downloads/pyferret/
+or by the conda-forge channel from https://anaconda.org/conda-forge/pyferret
+* **gunicorn** (http://gunicorn.org) release 19.6.0 to be installed with conda:
 ```
 conda install gunicorn
 ```
-* **nwjs** (http://nwjs.io/downloads/), choose the Stable release.
+* **nwjs** (http://nwjs.io/downloads/), choose the stable release.
 
 ####Installation notes
 * on Mac OS X: nwjs should be renamed nw and accessible with the $PATH environment variable (or changed in pyferretWMS.py)
@@ -64,28 +64,28 @@ conda install gunicorn
 <hr>
 2016/09/20
 
-An environment script is loaded from the master process. All datasets loaded and variables defined are
-then available from the different workers.
-Depending the number of commands separated by ; passed as argument, you can now get until 4 synchronous maps
-with colorbars (keys) made from qualifiers specified.
+An environment script is loaded from the master process. All loaded datasets and defined variables are
+then available to the different workers.
+Depending on the number of commands separated by ; passed as argument, you can now get up to 4 synchronous maps
+with colorbars (keys) made from specified qualifiers.
 
 <hr>
 2016/09/16
 
-Slippy map is now made from multiple workers. Problem: the dataset and variables if defined
-should be passed somehow to the workers. I haven't found yet how to enherit from the calling
+Slippy maps are now made from multiple workers. Problem: the dataset and variables if defined
+should be passed somehow to the workers. I haven't found yet how to inherit from the calling
 environment.
 
-Also how this should be called ? From a external function ? As a new command ?
+Also, how this should be called? From an external function? As a new command?
 
-Speed for creating tiles is also an issue especially when you work with a curvilinear grid quite large
+Speed for creating tiles is also an issue, especially when you work with a curvilinear grid that is quite large
 (1440x1021), even with several workers.
 
 <hr>
 2016/09/09
 
 You can now get slippy maps by a simple ```import pyferretWMS``` and a call to ```pyferretWMS.slippyMap()```.
-It is made possible because the gunicorn is now launched directly from python and not anymore from command line. 
+It is made possible because the gunicorn is now launched directly from python and not anymore from the command line. 
 All temporary files (png tiles and the html + package.json for the nw application)
 are cleaned properly when exiting (either by closing the client application or by typing "CTRL+C" when launched from a python script).
 
@@ -104,7 +104,7 @@ and they use pyferret for the rendering. You can then use the classic ferret syn
 your variable in a fully pan-and-zoom environment.
 
 Slippy maps avoid the command-line typing and display loops and hopefully will help us on model analysis. 
-Moreover, considering that nowdays models are becoming incredibily refined with sometimes resolutions at 1/12°.
+Moreover, considering that nowdays models are becoming incredibily refined with sometimes resolutions of 1/12°.
 That makes the pan/zoom navigation even more useful.
 
 Next steps:
