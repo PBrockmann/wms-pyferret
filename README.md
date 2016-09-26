@@ -75,7 +75,7 @@ conda install gunicorn
 * Colorbars are created by master process and added to the template html page
 * Add map center and zoom option
 * Change call to allow curvilinear grid plot (shade command with 3 arguments) 
-* Change zoom control buttons
+* Resize zoom control buttons
 * Remove attribution display (for better visibility)  
 
 
