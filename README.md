@@ -66,6 +66,7 @@ conda install gunicorn
 - [gunicorn: a Python WSGI HTTP Server] (http://gunicorn.org)
 - [WMS in Leaflet] (http://leafletjs.com/examples/wms/wms.html)
 - [Node-Webkit] (http://nwjs.io)
+- [Synchronous maps] (https://github.com/turban/Leaflet.Sync)
 
 ####Releases notes
 <hr>
@@ -74,6 +75,8 @@ conda install gunicorn
 * Colorbars are created by master process and added to the template html page
 * Add map center and zoom option
 * Change call to allow curvilinear grid plot (shade command with 3 arguments) 
+* Change zoom control buttons
+* Remove attribution display (for better visibility)  
 
 
 <hr>
