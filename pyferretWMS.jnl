@@ -1,2 +1,7 @@
 
+!-----------------------------------------
+! datasets to open
 use levitus_climatology
+
+!-----------------------------------------
+! variables to define
