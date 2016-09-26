@@ -13,7 +13,7 @@ is the separator between commands and will determine the number of maps to be dr
 The qualifiers can include the title qualifier considering that the space character
 is not allowed since used to distinguish the cmd/qualifiers and the variable(s).
 For this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon).
-For example: 'shade/x=-180:180/y=-90:90/lev=20/title="Simulation&nbspA" varA; shade/x=-180:180/y=-90:90/lev=20/title="Simulation&nbspB" varB'
+For example: 'shade/x=-180:180/y=-90:90/lev=20/title="Simulation&nbspA" varA'
 
 Options:
   --version        show program's version number and exit
