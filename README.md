@@ -57,7 +57,7 @@ conda install gunicorn
 <hr>
 2016/09/21
 
-* colorbars are created by master process and added to the template html page
+* Colorbars are created by master process and added to the template html page
 * Add map center and zoom option
 * Change call to allow curvilinear grid plot (shade command with 3 arguments) 
 
