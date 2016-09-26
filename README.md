@@ -60,6 +60,13 @@ conda install gunicorn
 ####Installation notes
 * on Mac OS X: nwjs should be renamed nw and accessible with the $PATH environment variable (or changed in pyferretWMS.py)
 
+####Work based on
+- [OpenGIS® Web Map Service Interface Standard (WMS)] (http://www.opengeospatial.org/standards/wms)
+- [pyferret] (http://ferret.pmel.noaa.gov/Ferret/documentation/pyferret)
+- [gunicorn: a Python WSGI HTTP Server] (http://gunicorn.org)
+- [WMS in Leaflet] (http://leafletjs.com/examples/wms/wms.html)
+- [Node-Webkit] (http://nwjs.io)
+
 ####Releases notes
 <hr>
 2016/09/21
@@ -113,9 +120,3 @@ Examples of calls:
 - ```./slippy_map.bash 'shade/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_viridis temp[k=@max]'```
 - ```./slippy_map.bash 'shade/lev=(-inf)(30,40,1)(inf)/pal=mpl_PSU_inferno salt[k=1]'```
 
-####Work based on
-- [OpenGIS® Web Map Service Interface Standard (WMS)] (http://www.opengeospatial.org/standards/wms)
-- [pyferret] (http://ferret.pmel.noaa.gov/Ferret/documentation/pyferret)
-- [gunicorn: a Python WSGI HTTP Server] (http://gunicorn.org)
-- [WMS in Leaflet] (http://leafletjs.com/examples/wms/wms.html)
-- [Node-Webkit] (http://nwjs.io)
