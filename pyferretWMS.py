@@ -41,24 +41,22 @@ def handler_app(environ, start_response):
         VLIM = '/vlim=' + BBOX[1] + ':' + BBOX[3]
 
         try:
+		tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
+		tmpname = os.path.basename(tmpname)
 
         	pyferret.run('set window/aspect=1/outline=5')           # outline=5 is a strange setting but works otherwise get outline around polygons
         	pyferret.run('go margins 0 0 0 0')
+		pyferret.run(COMMAND +  '/noaxis/nolab/nokey' + HLIM + VLIM + ' ' + VARIABLE)
+		pyferret.run('frame/format=PNG/transparent/xpixels=' + str(WIDTH) + '/file="' + tmpdir + '/' + tmpname + '"')
 
-                pyferret.run(COMMAND +  '/noaxis/nolab/nokey' + HLIM + VLIM + ' ' + VARIABLE)
-        
-                tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
-                tmpname = os.path.basename(tmpname)
-                pyferret.run('frame/format=PNG/transparent/xpixels=' + str(WIDTH) + '/file="' + tmpdir + '/' + tmpname + '"')
-
-                if os.path.isfile(tmpdir + '/' + tmpname):
+		if os.path.isfile(tmpdir + '/' + tmpname):
                         ftmp = open(tmpdir + '/' + tmpname, 'rb')
                         img = ftmp.read()
                         ftmp.close()
                         os.remove(tmpdir + '/' + tmpname)
       
-                start_response('200 OK', [('content-type', 'image/png')])
-                return iter(img) 
+		start_response('200 OK', [('content-type', 'image/png')])
+		return iter(img) 
     
         except:
                 return iter('Exception caught')
@@ -124,6 +122,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	# Launch NW.js
     	proc = subprocess.Popen(['nw', tmpdir])
     	print('Client nw process: ', proc.pid)
+
         self.options = options or {}
         self.application = app
 
