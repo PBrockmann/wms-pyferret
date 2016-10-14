@@ -1,0 +1,300 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Slippy maps with WMS from pyferret</title>
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
+
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.css' />
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.js'></script>
+
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.css' />
+
+    <style type='text/css'>
+        html, body { font-family: 'arial' }
+        .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px;}
+        .title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width:  200px; }
+        .map { width: 400px; height: 300px; }
+        .key { text-align: center; margin: auto; }
+        .key img { width: 400px; height: 50px; max-width: 400px; }
+	.leaflet-bar a, .leaflet-bar a:hover {
+    		height: 16px;
+    		line-height: 16px;
+    		width: 16px;
+	}
+	.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+    		font-size: 14px;
+		text-indent: 0px;
+	}
+	label {
+		display: block;
+		margin: 30px 0 0 0;
+	}
+	#commandLine {
+		margin-left: 10px;
+		margin-top: 40px;
+    		width: 600px;
+	}
+    </style>
+</head>
+
+<body>
+
+<div class='mapContainer'>
+   <div id='title1' class='title'></div>
+   <div id='map1' class='map'></div>
+   <div id='key1' class='key'></div>
+</div>
+
+<div class='mapContainer'>
+   <div id='title2' class='title'></div>
+   <div id='map2' class='map'></div>
+   <div id='key2' class='key'></div>
+</div>
+
+<input id="commandLine" type="text" class="form-control" placeholder="New command for map2">
+
+<script type='text/javascript'>
+/*
+ * Extends L.Map to synchronize the interaction on one map to one or more other maps.
+ */
+
+(function () {
+    var NO_ANIMATION = {
+        animate: false,
+        reset: true
+    };
+
+    L.Map = L.Map.extend({
+        sync: function (map, options) {
+            this._initSync();
+            options = L.extend({
+                noInitialSync: false,
+                syncCursor: false,
+                syncCursorMarkerOptions: {
+                    radius: 10,
+                    fillOpacity: 0.3,
+                    color: '#da291c',
+                    fillColor: '#fff'
+                }
+            }, options);
+
+            // prevent double-syncing the map:
+            if (this._syncMaps.indexOf(map) === -1) {
+                this._syncMaps.push(map);
+            }
+
+            if (!options.noInitialSync) {
+                map.setView(this.getCenter(), this.getZoom(), NO_ANIMATION);
+            }
+            if (options.syncCursor) {
+                map.cursor = L.circleMarker([0, 0], options.syncCursorMarkerOptions).addTo(map);
+
+                this._cursors.push(map.cursor);
+
+                this.on('mousemove', this._cursorSyncMove, this);
+                this.on('mouseout', this._cursorSyncOut, this);
+            }
+            return this;
+        },
+
+        _cursorSyncMove: function (e) {
+            this._cursors.forEach(function (cursor) {
+                cursor.setLatLng(e.latlng);
+            });
+        },
+
+        _cursorSyncOut: function (e) {
+            this._cursors.forEach(function (cursor) {
+                // TODO: hide cursor in stead of moving to 0, 0
+                cursor.setLatLng([0, 0]);
+            });
+        },
+
+
+        // unsync maps from each other
+        unsync: function (map) {
+            var self = this;
+
+            if (this._syncMaps) {
+                this._syncMaps.forEach(function (synced, id) {
+                    if (map === synced) {
+                        self._syncMaps.splice(id, 1);
+                        if (map.cursor) {
+                            map.cursor.removeFrom(map);
+                        }
+                    }
+                });
+            }
+            this.off('mousemove', this._cursorSyncMove, this);
+            this.off('mouseout', this._cursorSyncOut, this);
+
+            return this;
+        },
+
+        // Checks if the maps is synced with anything
+        isSynced: function () {
+            return (this.hasOwnProperty('_syncMaps') && Object.keys(this._syncMaps).length > 0);
+        },
+
+        // overload methods on originalMap to replay interactions on _syncMaps;
+        _initSync: function () {
+            if (this._syncMaps) {
+                return;
+            }
+            var originalMap = this;
+
+            this._syncMaps = [];
+            this._cursors = [];
+
+            L.extend(originalMap, {
+                setView: function (center, zoom, options, sync) {
+                    if (!sync) {
+                        originalMap._syncMaps.forEach(function (toSync) {
+                            toSync.setView(center, zoom, options, true);
+                        });
+                    }
+                    return L.Map.prototype.setView.call(this, center, zoom, options);
+                },
+
+                panBy: function (offset, options, sync) {
+                    if (!sync) {
+                        originalMap._syncMaps.forEach(function (toSync) {
+                            toSync.panBy(offset, options, true);
+                        });
+                    }
+                    return L.Map.prototype.panBy.call(this, offset, options);
+                },
+
+                _onResize: function (event, sync) {
+                    if (!sync) {
+                        originalMap._syncMaps.forEach(function (toSync) {
+                            toSync._onResize(event, true);
+                        });
+                    }
+                    return L.Map.prototype._onResize.call(this, event);
+                }
+            });
+
+            originalMap.on('zoomend', function () {
+                originalMap._syncMaps.forEach(function (toSync) {
+                    toSync.setView(originalMap.getCenter(), originalMap.getZoom(), NO_ANIMATION);
+                });
+            }, this);
+
+            originalMap.dragging._draggable._updatePosition = function () {
+                L.Draggable.prototype._updatePosition.call(this);
+                var self = this;
+                originalMap._syncMaps.forEach(function (toSync) {
+                    L.DomUtil.setPosition(toSync.dragging._draggable._element, self._newPos);
+                    toSync.eachLayer(function (layer) {
+                        if (layer._google !== undefined) {
+                            layer._google.setCenter(originalMap.getCenter());
+                        }
+                    });
+                    toSync.fire('moveend');
+                });
+            };
+        }
+    });
+})();
+</script>
+
+<script type='text/javascript'>
+
+//===============================================
+var crs = L.CRS.EPSG4326;
+
+
+//===============================================
+var wmspyferret1 = L.tileLayer.wms('http://localhost:8000', {
+	command: 'shade/x=-180:180/y=-90:90/lev=20/pal=mpl_PSU_inferno',
+	variable: 'temp[k=1]',
+    	crs: crs,
+	format: 'image/png',
+	transparent: true,
+    	uppercase: true
+});
+var frontiers1 = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
+	layers: 'GCA:GCA_frontiersCountryAndRegions',
+	format: 'image/png',
+    	crs: crs,
+	transparent: true
+});
+
+var map1 = L.map('map1', {
+    layers: [wmspyferret1, frontiers1],
+    crs: crs,
+    center: [0,-40],
+    zoom: 1,
+    attributionControl: false
+});
+
+//===============================================
+var wmspyferret2 = L.tileLayer.wms('http://localhost:8000', {
+	command: 'shade/x=-180:180/y=-90:90/lev=20/pal=mpl_Seq1_RdPu',
+	variable: 'salt[k=1]',
+    	crs: crs,
+	format: 'image/png',
+	transparent: true,
+    	uppercase: true
+});
+var frontiers2 = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
+	layers: 'GCA:GCA_frontiersCountryAndRegions',
+	format: 'image/png',
+    	crs: crs,
+	transparent: true
+});
+
+var map2 = L.map('map2', {
+    layers: [wmspyferret2, frontiers2],
+    crs: crs,
+    center: [0,-40],
+    zoom: 1,
+    attributionControl: false
+});
+
+
+//===============================================
+// Set up synchro between maps
+map1.sync(map2);
+map2.sync(map1);
+
+//===============================================
+$('#title1').html(wmspyferret1.wmsParams.variable);   
+$('#title1').attr('title', wmspyferret1.wmsParams.command + ' ' + wmspyferret1.wmsParams.variable);   
+$('#key1').html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
+							'&COMMAND=' + wmspyferret1.wmsParams.command +  
+							'&VARIABLE=' + wmspyferret1.wmsParams.variable + '" />');
+
+$('#title2').html(wmspyferret2.wmsParams.variable);   
+$('#title2').attr('title', wmspyferret2.wmsParams.command + ' ' + wmspyferret2.wmsParams.variable);   
+$('#key2').html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
+							'&COMMAND=' + wmspyferret2.wmsParams.command +  
+							'&VARIABLE=' + wmspyferret2.wmsParams.variable + '" />');
+
+$('#commandLine').val(wmspyferret2.wmsParams.command + ' ' + wmspyferret2.wmsParams.variable);   
+
+$('#commandLine').on('keypress', function(e) {
+    if(e.which === 13) {
+	commandLine = $(this).val().split(' ');
+	command = commandLine[0];
+	commandLine.shift()
+	variable = commandLine.join();	
+	console.log(command + ' ' + variable);
+	wmspyferret2.setParams({ command: command, variable: variable });
+	$('#title2').html(wmspyferret2.wmsParams.variable);   
+	$('#title2').attr('title', wmspyferret2.wmsParams.command + ' ' + wmspyferret2.wmsParams.variable);   
+	$('#key2').html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
+							'&COMMAND=' + wmspyferret2.wmsParams.command +  
+							'&VARIABLE=' + wmspyferret2.wmsParams.variable + '" />');
+    }
+});
+
+</script>
+
+</body>
+</html>
