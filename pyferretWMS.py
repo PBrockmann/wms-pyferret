@@ -29,26 +29,23 @@ def handler_app(environ, start_response):
     fields = parse_formvars(environ)
     if environ['REQUEST_METHOD'] == 'GET':
         
-        CMDarr = fields['CMD'].split()
-
-        CMD = CMDarr[0].strip()                     # get the ferret command to append needed qualifiers
-        VARIABLE = ' '.join(CMDarr[1:])             # 1 variable or 3 variables as var2D, lon2D, lat2D for curvilinear grids
-
+        COMMAND = fields['COMMAND']
+        VARIABLE = fields['VARIABLE']
         HEIGHT = int(fields['HEIGHT'])
         WIDTH = int(fields['WIDTH'])
     
         # BBOX=xmin,ymin,xmax,ymax
         BBOX = fields['BBOX'].split(',')
 
-        hlim = '/hlim=' + BBOX[0] + ':' + BBOX[2]
-        vlim = '/vlim=' + BBOX[1] + ':' + BBOX[3]
+        HLIM = '/hlim=' + BBOX[0] + ':' + BBOX[2]
+        VLIM = '/vlim=' + BBOX[1] + ':' + BBOX[3]
 
         try:
 
-        	pyferret.run('set window/outline=5/aspect=1')           # outline=5 is a strange setting but works otherwise get outline around polygons
+        	pyferret.run('set window/aspect=1/outline=5')           # outline=5 is a strange setting but works otherwise get outline around polygons
         	pyferret.run('go margins 0 0 0 0')
 
-                pyferret.run(CMD +  '/noaxis/nolab/nokey' + hlim + vlim + ' ' + VARIABLE)
+                pyferret.run(COMMAND +  '/noaxis/nolab/nokey' + HLIM + VLIM + ' ' + VARIABLE)
         
                 tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
                 tmpname = os.path.basename(tmpname)
@@ -90,14 +87,16 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	# Start pyferret	
         pyferret.start(journal=False, unmapped=True, quiet=True, verify=False)
 
+        # Load the environment (dataset to open + variables definition)
+        pyferret.run('go ' + envScript)
+
 	# Produce colobars (keys) from a crop on a 400x400 image
-	for i,cmd in enumerate(cmds, start=1):
-		cmd1 = cmd.split(' ')[0]			# get command and variable to append /set_up qualifier
-		variable = ' '.join(cmd.split(' ')[1:])
+	for i,aDict in enumerate(cmdArray, start=1):
+		COMMAND = aDict['command']
+		VARIABLE = aDict['variable']
 		pyferret.run('set window/aspect=1')
-        	pyferret.run('go ' + envScript)			# load the environment (dataset to open + variables definition)
 		pyferret.run('go margins 2 4 3 3')
-		pyferret.run(cmd1 + '/set_up ' + variable)
+		pyferret.run(COMMAND + '/set_up ' + VARIABLE)		# add /set_up qualifier
 		pyferret.run('ppl shakey 1, 0, 0.15, , 3, 9, 1, `($vp_width)-1`, 1, 1.25 ; ppl shade')
 		pyferret.run('frame/format=PNG/transparent/xpixels=400/file="' + tmpdir + '/key' + str(i) + '.png"')
 		im = Image.open(tmpdir + '/key' + str(i) + '.png')
@@ -113,21 +112,8 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	instance_WMS_Client = Template(template_WMS_client())
 	instance_NW_Package = Template(template_nw_package())
 
-	# Inspect commands to get /title qualifier if present
-	titles = []
-	for i,cmd in enumerate(cmds, start=1):
-		cmd1 = cmd.split(' ')[0]			# get command and variable to append /set_up qualifier
-		variable = ' '.join(cmd.split(' ')[1:])
-		m = re.search('/title="(.*)"', cmd1)
-		if m:
-			title = m.group(1)
-			titles.append(title)
-		else:
-			titles.append(cmd)
-	titles = zip(cmds, titles)		# list of tuples to have both cmd and title with jinja and {% for cmd, title in titles %}
-
 	with open(tmpdir + '/index.html', 'wb') as f:
-    		f.write(instance_WMS_Client.render(cmds=cmds, titles=titles, gunicornPID=master_pid, 
+    		f.write(instance_WMS_Client.render(cmdArray=cmdArray, gunicornPID=master_pid, 
 						   listSynchroMapsToSet=listSynchroMapsToSet,
 						   mapWidth=mapWidth, mapHeight=mapHeight, 
 						   mapCenter=mapCenter, mapZoom=mapZoom))
@@ -195,9 +181,9 @@ def template_WMS_client():
 
 <body>
 
-{% for cmd, title in titles %}
+{% for aDict in cmdArray %}
 <div class='mapContainer'>
-   <div id='title{{ loop.index }}' class='title' title='{{ cmd }}'>{{ title }}</div>
+   <div id='title{{ loop.index }}' class='title' title='{{ [aDict.command,aDict.variable]|join(" ") }}'>{{ aDict.title }}</div>
    <div id='map{{ loop.index }}' class='map'></div>
    <div id='key{{ loop.index }}' class='key'><img src='skey{{ loop.index }}.png'></img></div>
 </div>
@@ -354,10 +340,11 @@ def template_WMS_client():
 //===============================================
 var crs = L.CRS.EPSG4326;
 
-{% for cmd in cmds %}
+{% for aDict in cmdArray %}
 //===============================================
 var wmspyferret{{ loop.index }} = L.tileLayer.wms('http://localhost:8000', {
-	cmd: '{{ cmd }}',
+	command: '{{ aDict.command }}',
+	variable: '{{ aDict.variable }}',
     	crs: crs,
 	format: 'image/png',
 	transparent: true,
@@ -428,7 +415,7 @@ usage = "%prog [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] 
 	"\nFor this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon)." + \
 	"\nFor example: 'shade/lev=20/title=\"Simulation&nbspA\" varA; shade/lev=20/title=\"Simulation&nbspB\" varB'"
 
-version = "%prog 0.9.1"
+version = "%prog 0.9.2"
 
 parser = OptionParser(usage=usage, version=version)
 
@@ -476,6 +463,21 @@ if nbMaps > 4:
 	print("\n=======> Error: Maximum number of maps: 4\n")
 	parser.print_help()
 	sys.exit(1)
+
+cmdArray = []				# create array of dict {'command', 'variable', 'title'}
+for i,cmd in enumerate(cmds, start=1):
+	# Get command
+	command = cmd.split(' ')[0]			
+	# Get variable
+	variable = ' '.join(cmd.split(' ')[1:])
+	# Inspect command to get /title qualifier if present
+        m = re.search('/title="(.*)"', command)
+        if m:
+           title = m.group(1)
+        else:
+           title = variable
+	# Append to array
+	cmdArray.append({'command': command, 'variable': variable, 'title': title})
 
 tmpdir = ''
 
