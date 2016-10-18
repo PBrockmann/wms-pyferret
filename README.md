@@ -82,6 +82,11 @@ conda install gunicorn
 * Resize zoom control buttons
 * Remove attribution display (for better visibility)  
 
+<hr>
+2016/18/10
+
+Colorbars are now created from workers that can handle either a GetColorBar
+or a GetMap request. 
 
 <hr>
 2016/09/20
