@@ -101,9 +101,6 @@ class myArbiter(gunicorn.arbiter.Arbiter):
 class StandaloneApplication(gunicorn.app.base.BaseApplication):
 
     def __init__(self, app, options=None):
-	global tmpdir
-        tmpdir = tempfile.mkdtemp()
-	print('Temporary directory to remove: ', tmpdir)
 
 	# Start pyferret	
         pyferret.start(journal=False, unmapped=True, quiet=True, verify=False)
@@ -111,23 +108,24 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 	master_pid = os.getpid()
 	print('---------> gunicorn master pid: ', master_pid)
 
-	listSynchroMapsToSet = list(itertools.permutations(range(1,nbMaps+1), 2))
+	if not serverOnly:		# nw will be launched 
+		listSynchroMapsToSet = list(itertools.permutations(range(1,nbMaps+1), 2))
 
-	instance_WMS_Client = Template(template_WMS_client())
-	instance_NW_Package = Template(template_nw_package())
+		instance_WMS_Client = Template(template_WMS_client())
+		instance_NW_Package = Template(template_nw_package())
 
-	with open(tmpdir + '/index.html', 'wb') as f:
-    		f.write(instance_WMS_Client.render(cmdArray=cmdArray, gunicornPID=master_pid, 
-						   listSynchroMapsToSet=listSynchroMapsToSet,
-						   mapWidth=mapWidth, mapHeight=mapHeight, 
-						   mapCenter=mapCenter, mapZoom=mapZoom))
-	with open(tmpdir + '/package.json', 'wb') as f:
-    		f.write(instance_NW_Package.render(nbMaps=nbMaps,
-						   mapWidth=mapWidth, mapHeight=mapHeight))
+		with open(tmpdir + '/index.html', 'wb') as f:
+    			f.write(instance_WMS_Client.render(cmdArray=cmdArray, gunicornPID=master_pid, 
+							   listSynchroMapsToSet=listSynchroMapsToSet,
+							   mapWidth=mapWidth, mapHeight=mapHeight, 
+							   mapCenter=mapCenter, mapZoom=mapZoom))
+		with open(tmpdir + '/package.json', 'wb') as f:
+    			f.write(instance_NW_Package.render(nbMaps=nbMaps,
+							   mapWidth=mapWidth, mapHeight=mapHeight))
 
-	# Launch NW.js
-    	proc = subprocess.Popen(['nw', tmpdir])
-    	print('Client nw process: ', proc.pid)
+		# Launch NW.js
+    		proc = subprocess.Popen(['nw', tmpdir])
+    		print('Client nw process: ', proc.pid)
 
         self.options = options or {}
         self.application = app
@@ -279,7 +277,8 @@ def template_nw_package():
 #==============================================================
 from optparse import OptionParser
 
-usage = "%prog [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] [--zoom=1]" + \
+#------------------------------------------------------
+usage = "%prog [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] [--zoom=1] [--server]" + \
 	"\n                              'cmd/qualifiers variable; cmd/qualifiers variable'" + \
 	"\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to" + \
 	"\nseparate the variable from the command and its qualifiers). The semi-colon character ';'" +\
@@ -289,72 +288,91 @@ usage = "%prog [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] 
 	"\nFor this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon)." + \
 	"\nFor example: 'shade/lev=20/title=Simulation&nbspA varA; shade/lev=20/title=Simulation&nbspB varB'"
 
-version = "%prog 0.9.3"
+version = "%prog 0.9.4"
 
+#------------------------------------------------------
 parser = OptionParser(usage=usage, version=version)
 
-parser.add_option("--width", type="int", dest="width", default=400, 
+parser.add_option("--width", type="int", dest="width", default=400,
 		help="200 < map width <= 600")
-parser.add_option("--height", type="int", dest="height", default=400, 
+parser.add_option("--height", type="int", dest="height", default=400,
 		help="200 < map height <= 600")
-parser.add_option("--env", dest="envScript", default="pyferretWMS.jnl", 
+parser.add_option("--env", dest="envScript", default="pyferretWMS.jnl",
 		help="ferret script to set the environment (default=pyferretWMS.jnl). It contains datasets to open, variables definition.")
-parser.add_option("--center", type="string", dest="center", default='[0,-40]', 
+parser.add_option("--center", type="string", dest="center", default='[0,-40]',
 		help="Initial center of maps as [lat, lon] (default=[0,-40])")
-parser.add_option("--zoom", type="int", dest="zoom", default=1, 
+parser.add_option("--zoom", type="int", dest="zoom", default=1,
 		help="Initial zoom of maps (default=1)")
+parser.add_option("--server", dest="serverOnly", action="store_true", default=False,
+		help="Server only (default=False)")
 
 (options, args) = parser.parse_args()
-
-if len(args) != 1:
-        parser.error("wrong number of arguments")
-	parser.print_help()
-
-if options.width < 200 or options.width > 600 or options.height < 200 or options.height > 600 :
-	parser.error("map size options incorrect")
-	parser.print_help()
-	sys.exit(1)
-
-if not os.path.isfile(options.envScript):
-	parser.error("Environment script option missing")
-	parser.print_help()
-	sys.exit(1)
 
 mapWidth =  options.width
 mapHeight = options.height
 mapCenter = options.center
 mapZoom = options.zoom
 envScript = options.envScript
-cmdsRequested = args[0]
+serverOnly = options.serverOnly
 
-cmds = cmdsRequested.split(';')		# get individual commands
-cmds = map(str.strip, cmds)  		# remove surrounding spaces if present
+#------------------------------------------------------
+# Global variables
+nbMaps = 0
+cmdArray = []
+tmpdir = tempfile.mkdtemp()
 
-nbMaps = len(cmds)
-print(str(nbMaps) + ' maps to draw')
+print('Temporary directory to remove: ', tmpdir)
 
-if nbMaps > 4:
-	print("\n=======> Error: Maximum number of maps: 4\n")
-	parser.print_help()
-	sys.exit(1)
+#------------------------------------------------------
+if serverOnly:
+	if len(args) != 0:
+        	parser.error("No argument needed in mode server")
+		parser.print_help()
 
-cmdArray = []				# create array of dict {'command', 'variable', 'title'}
-for i,cmd in enumerate(cmds, start=1):
-	# Get command
-	command = cmd.split(' ')[0]			
-	# Get variable
-	variable = ' '.join(cmd.split(' ')[1:])
-	# Inspect command to get /title qualifier if present
-        m = re.search('/title=([\w&]+)', command)	# [\w&] = alphanumeric and & (for html entities like &nbsp)
-        if m:
-           title = m.group(1)
-        else:
-           title = variable
-	# Append to array
-	cmdArray.append({'command': command, 'variable': variable, 'title': title})
+else:
+	if len(args) != 1:
+        	parser.error("Wrong number of arguments")
+		parser.print_help()
 
-tmpdir = ''
+	if mapWidth < 200 or mapWidth > 600 or mapHeight < 200 or mapHeight > 600 :
+		parser.error("Map size options incorrect")
+		parser.print_help()
+		sys.exit(1)
+	
+	if not os.path.isfile(envScript):
+		parser.error("Environment script option missing")
+		parser.print_help()
+		sys.exit(1)
+	
+	cmdsRequested = args[0]
+	
+	cmds = cmdsRequested.split(';')		# get individual commands
+	cmds = map(str.strip, cmds)  		# remove surrounding spaces if present
+	
+	nbMaps = len(cmds)
+	print(str(nbMaps) + ' maps to draw')
+	
+	if nbMaps > 4:
+		print("\n=======> Error: Maximum number of maps: 4\n")
+		parser.print_help()
+		sys.exit(1)
+	
+	# create array of dict {'command', 'variable', 'title'}
+	for i,cmd in enumerate(cmds, start=1):
+		# Get command
+		command = cmd.split(' ')[0]			
+		# Get variable
+		variable = ' '.join(cmd.split(' ')[1:])
+		# Inspect command to get /title qualifier if present
+	        m = re.search('/title=([\w&]+)', command)	# [\w&] = alphanumeric and & (for html entities like &nbsp)
+	        if m:
+	           title = m.group(1)
+	        else:
+	           title = variable
+		# Append to array
+		cmdArray.append({'command': command, 'variable': variable, 'title': title})
 
+#------------------------------------------------------
 options = {
     'bind': '%s:%s' % ('127.0.0.1', '8000'),
     'workers': number_of_workers(),
