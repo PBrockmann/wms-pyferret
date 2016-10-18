@@ -11,7 +11,7 @@ Slippy maps avoid command-line typing and display loops and hopefully will help 
 
 ####Usage
 ```
-Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] [--zoom=1]
+Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] [--zoom=1] [--server]
                               'cmd/qualifiers variable; cmd/qualifiers variable'
 
 'cmd/qualifiers variable' is a classic ferret call (no space allowed except to
@@ -20,8 +20,7 @@ is the separator between commands and will determine the number of maps to be dr
 The qualifiers can include the title qualifier considering that the space character
 is not allowed since used to distinguish the cmd/qualifiers and the variable(s).
 For this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon).
-Please also notice that no surrounding quotes are allowed.
-For example: 'shade/x=-180:180/y=-90:90/lev=20/title=Simulation&nbspA varA'
+For example: 'shade/lev=20/title=Simulation&nbspA varA; shade/lev=20/title=Simulation&nbspB varB'
 
 Options:
   --version        show program's version number and exit
@@ -33,6 +32,7 @@ Options:
                    variables definition.
   --center=CENTER  Initial center of maps as [lat, lon] (default=[0,-40])
   --zoom=ZOOM      Initial zoom of maps (default=1)
+  --server         Server only (default=False)
 ```
 
 ####Examples
@@ -73,6 +73,12 @@ conda install gunicorn
 - [Synchronous maps] (https://github.com/turban/Leaflet.Sync)
 
 ####Releases notes
+<hr>
+2016/10/18
+
+* Merge server mode as a new option (tag 0.9.4)
+* Colorbars are now created from workers that can handle either a GetColorBar or a GetMap request (tag 0.9.3)
+
 <hr>
 2016/09/21
 
