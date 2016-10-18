@@ -278,7 +278,7 @@ def template_nw_package():
 from optparse import OptionParser
 
 #------------------------------------------------------
-usage = "%prog [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] [--zoom=1] [--server]" + \
+usage = "%prog [--env=script.jnl] [--width=400] [--height=400] [--size=value] [--center=[0,0]] [--zoom=1] [--server]" + \
 	"\n                              'cmd/qualifiers variable; cmd/qualifiers variable'" + \
 	"\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to" + \
 	"\nseparate the variable from the command and its qualifiers). The semi-colon character ';'" +\
@@ -297,6 +297,8 @@ parser.add_option("--width", type="int", dest="width", default=400,
 		help="200 < map width <= 600")
 parser.add_option("--height", type="int", dest="height", default=400,
 		help="200 < map height <= 600")
+parser.add_option("--size", type="int", dest="size",
+		help="200 < map height and width <= 600")
 parser.add_option("--env", dest="envScript", default="pyferretWMS.jnl",
 		help="ferret script to set the environment (default=pyferretWMS.jnl). It contains datasets to open, variables definition.")
 parser.add_option("--center", type="string", dest="center", default='[0,-40]',
@@ -308,8 +310,13 @@ parser.add_option("--server", dest="serverOnly", action="store_true", default=Fa
 
 (options, args) = parser.parse_args()
 
-mapWidth =  options.width
-mapHeight = options.height
+if options.size:
+	mapHeight = options.size
+	mapWidth = options.size
+else:
+	mapHeight = options.height
+	mapWidth = options.width
+
 mapCenter = options.center
 mapZoom = options.zoom
 envScript = options.envScript
@@ -334,8 +341,8 @@ else:
         	parser.error("Wrong number of arguments")
 		parser.print_help()
 
-	if mapWidth < 200 or mapWidth > 600 or mapHeight < 200 or mapHeight > 600 :
-		parser.error("Map size options incorrect")
+	if (mapWidth < 200 or mapWidth > 600) or (mapHeight < 200 or mapHeight > 600):
+		parser.error("Map size options incorrect (200 <= size,width,height <= 600)")
 		parser.print_help()
 		sys.exit(1)
 	

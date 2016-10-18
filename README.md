@@ -11,7 +11,7 @@ Slippy maps avoid command-line typing and display loops and hopefully will help 
 
 ####Usage
 ```
-Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] [--zoom=1] [--server]
+Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] [--size=value] [--center=[0,0]] [--zoom=1] [--server]
                               'cmd/qualifiers variable; cmd/qualifiers variable'
 
 'cmd/qualifiers variable' is a classic ferret call (no space allowed except to
@@ -27,6 +27,7 @@ Options:
   -h, --help       show this help message and exit
   --width=WIDTH    200 < map width <= 600
   --height=HEIGHT  200 < map height <= 600
+  --size=SIZE      200 < map height and width <= 600
   --env=ENVSCRIPT  ferret script to set the environment
                    (default=pyferretWMS.jnl). It contains datasets to open,
                    variables definition.
