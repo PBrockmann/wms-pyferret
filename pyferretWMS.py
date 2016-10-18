@@ -350,7 +350,6 @@ for i,cmd in enumerate(cmds, start=1):
            title = m.group(1)
         else:
            title = variable
-	print(title)
 	# Append to array
 	cmdArray.append({'command': command, 'variable': variable, 'title': title})
 
