@@ -160,14 +160,14 @@ def template_WMS_client():
     <meta charset='utf-8'>
     <title>Slippy maps with WMS from pyferret</title>
 
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
-    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' />
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' />
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
 
-    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.css' />
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.js'></script>
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.css' />
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.js'></script>
 
-    <script src='https://unpkg.com/leaflet.sync@0.0.5'></script>
+    <script src='http://cdn.rawgit.com/turban/Leaflet.Sync/0.0.5/L.Map.Sync.js'></script>
 
     <style type='text/css'>
         html, body { font-family: 'arial' }
