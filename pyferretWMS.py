@@ -29,34 +29,57 @@ def handler_app(environ, start_response):
     fields = parse_formvars(environ)
     if environ['REQUEST_METHOD'] == 'GET':
         
-        COMMAND = fields['COMMAND']
-        VARIABLE = fields['VARIABLE']
-        HEIGHT = int(fields['HEIGHT'])
-        WIDTH = int(fields['WIDTH'])
-    
-        # BBOX=xmin,ymin,xmax,ymax
-        BBOX = fields['BBOX'].split(',')
-
-        HLIM = '/hlim=' + BBOX[0] + ':' + BBOX[2]
-        VLIM = '/vlim=' + BBOX[1] + ':' + BBOX[3]
-
         try:
-		tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
-		tmpname = os.path.basename(tmpname)
+		if fields['SERVICE'] != 'WMS':
+			raise
 
-        	pyferret.run('set window/aspect=1/outline=5')           # outline=5 is a strange setting but works otherwise get outline around polygons
-        	pyferret.run('go margins 0 0 0 0')
-		pyferret.run(COMMAND +  '/noaxis/nolab/nokey' + HLIM + VLIM + ' ' + VARIABLE)
-		pyferret.run('frame/format=PNG/transparent/xpixels=' + str(WIDTH) + '/file="' + tmpdir + '/' + tmpname + '"')
+        	COMMAND = fields['COMMAND']
+        	VARIABLE = fields['VARIABLE']
 
-		if os.path.isfile(tmpdir + '/' + tmpname):
+        	pyferret.run('go ' + envScript)                 # load the environment (dataset to open + variables definition)
+
+                tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
+                tmpname = os.path.basename(tmpname)
+
+		#print(fields['REQUEST'] + ': ' + COMMAND + ' ' + VARIABLE)
+		if fields['REQUEST'] == 'GetColorBar':
+                	pyferret.run('set window/aspect=1/outline=0')
+                	pyferret.run('go margins 2 4 3 3')
+                	pyferret.run(COMMAND + '/set_up ' + VARIABLE)
+                	pyferret.run('ppl shakey 1, 0, 0.15, , 3, 9, 1, `($vp_width)-1`, 1, 1.25 ; ppl shade')
+                	pyferret.run('frame/format=PNG/transparent/xpixels=400/file="' + tmpdir + '/key' + tmpname + '"')
+
+                	im = Image.open(tmpdir + '/key' + tmpname)
+                	box = (0, 325, 400, 375)
+                	area = im.crop(box)
+                	area.save(tmpdir + '/' + tmpname, "PNG")
+
+		elif fields['REQUEST'] == 'GetMap':
+        		WIDTH = int(fields['WIDTH'])
+        		HEIGHT = int(fields['HEIGHT'])
+
+        		# BBOX=xmin,ymin,xmax,ymax
+        		BBOX = fields['BBOX'].split(',')
+
+        		HLIM = '/hlim=' + BBOX[0] + ':' + BBOX[2]
+        		VLIM = '/vlim=' + BBOX[1] + ':' + BBOX[3]
+
+        		pyferret.run('set window/aspect=1/outline=5')           # outline=5 is a strange setting but works otherwise get outline around polygons
+        		pyferret.run('go margins 0 0 0 0')
+                	pyferret.run(COMMAND +  '/noaxis/nolab/nokey' + HLIM + VLIM + ' ' + VARIABLE)
+                	pyferret.run('frame/format=PNG/transparent/xpixels=' + str(WIDTH) + '/file="' + tmpdir + '/' + tmpname + '"')
+
+		else:
+			raise
+
+                if os.path.isfile(tmpdir + '/' + tmpname):
                         ftmp = open(tmpdir + '/' + tmpname, 'rb')
                         img = ftmp.read()
                         ftmp.close()
                         os.remove(tmpdir + '/' + tmpname)
       
-		start_response('200 OK', [('content-type', 'image/png')])
-		return iter(img) 
+                start_response('200 OK', [('content-type', 'image/png')])
+                return iter(img) 
     
         except:
                 return iter('Exception caught')
@@ -84,23 +107,6 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 
 	# Start pyferret	
         pyferret.start(journal=False, unmapped=True, quiet=True, verify=False)
-
-        # Load the environment (dataset to open + variables definition)
-        pyferret.run('go ' + envScript)
-
-	# Produce colobars (keys) from a crop on a 400x400 image
-	for i,aDict in enumerate(cmdArray, start=1):
-		COMMAND = aDict['command']
-		VARIABLE = aDict['variable']
-		pyferret.run('set window/aspect=1')
-		pyferret.run('go margins 2 4 3 3')
-		pyferret.run(COMMAND + '/set_up ' + VARIABLE)		# add /set_up qualifier
-		pyferret.run('ppl shakey 1, 0, 0.15, , 3, 9, 1, `($vp_width)-1`, 1, 1.25 ; ppl shade')
-		pyferret.run('frame/format=PNG/transparent/xpixels=400/file="' + tmpdir + '/key' + str(i) + '.png"')
-		im = Image.open(tmpdir + '/key' + str(i) + '.png')
-		box = (0, 325, 400, 375)	
-		area = im.crop(box)
-		area.save(tmpdir + '/skey' + str(i) + '.png', "PNG")
 
 	master_pid = os.getpid()
 	print('---------> gunicorn master pid: ', master_pid)
@@ -156,8 +162,12 @@ def template_WMS_client():
     <meta charset='utf-8'>
     <title>Slippy maps with WMS from pyferret</title>
 
-    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.css' />
-    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
+
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.css' />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.js'></script>
 
     <script src='https://unpkg.com/leaflet.sync@0.0.5'></script>
 
@@ -182,20 +192,20 @@ def template_WMS_client():
 
 <body>
 
-{% for aDict in cmdArray %}
+{% for aDict in cmdArray -%}
 <div class='mapContainer'>
-   <div id='title{{ loop.index }}' class='title' title='{{ [aDict.command,aDict.variable]|join(" ") }}'>{{ aDict.title }}</div>
+   <div id='title{{ loop.index }}' class='title'></div>
    <div id='map{{ loop.index }}' class='map'></div>
-   <div id='key{{ loop.index }}' class='key'><img src='skey{{ loop.index }}.png'></img></div>
+   <div id='key{{ loop.index }}' class='key'><img /></div>
 </div>
-{% endfor %}
+{% endfor -%}
 
 <script type='text/javascript'>
 
 //===============================================
 var crs = L.CRS.EPSG4326;
 
-{% for aDict in cmdArray %}
+{% for aDict in cmdArray -%}
 //===============================================
 var wmspyferret{{ loop.index }} = L.tileLayer.wms('http://localhost:8000', {
 	command: '{{ aDict.command }}',
@@ -225,6 +235,15 @@ var map{{ loop.index }} = L.map('map{{ loop.index }}', {
 // Set up synchro between maps
 {% for synchro in listSynchroMapsToSet -%}
 map{{ synchro[0] }}.sync(map{{ synchro[1] }});
+{% endfor %}
+
+//===============================================
+{% for aDict in cmdArray -%}
+$('#title{{ loop.index }}').html('{{ aDict.title }}');   
+$('#title{{ loop.index }}').attr('title', wmspyferret{{ loop.index }}.wmsParams.command + ' ' + wmspyferret{{ loop.index }}.wmsParams.variable);   
+$('#key{{ loop.index }}').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
+                                                '&COMMAND=' + wmspyferret{{ loop.index }}.wmsParams.command +  
+                                                '&VARIABLE=' + wmspyferret{{ loop.index }}.wmsParams.variable);
 {% endfor %}
 
 //===============================================
@@ -268,9 +287,9 @@ usage = "%prog [--env=script.jnl] [--width=400] [--height=400] [--center=[0,0]] 
 	"\nThe qualifiers can include the title qualifier considering that the space character" + \
 	"\nis not allowed since used to distinguish the cmd/qualifiers and the variable(s)." + \
 	"\nFor this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon)." + \
-	"\nFor example: 'shade/lev=20/title=\"Simulation&nbspA\" varA; shade/lev=20/title=\"Simulation&nbspB\" varB'"
+	"\nFor example: 'shade/lev=20/title=Simulation&nbspA varA; shade/lev=20/title=Simulation&nbspB varB'"
 
-version = "%prog 0.9.2"
+version = "%prog 0.9.3"
 
 parser = OptionParser(usage=usage, version=version)
 
@@ -326,11 +345,12 @@ for i,cmd in enumerate(cmds, start=1):
 	# Get variable
 	variable = ' '.join(cmd.split(' ')[1:])
 	# Inspect command to get /title qualifier if present
-        m = re.search('/title="(.*)"', command)
+        m = re.search('/title=([\w&]+)', command)	# [\w&] = alphanumeric and & (for html entities like &nbsp)
         if m:
            title = m.group(1)
         else:
            title = variable
+	print(title)
 	# Append to array
 	cmdArray.append({'command': command, 'variable': variable, 'title': title})
 

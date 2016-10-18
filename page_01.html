@@ -138,9 +138,8 @@ $('#commandLine').on('keypress', function(e) {
     if(e.which === 13) {
 	commandLine = $(this).val().split(' ');
 	command = commandLine[0];
-	commandLine.shift()
-	variable = commandLine.join();	
-	console.log(command + ' ' + variable);
+	commandLine.shift();
+	variable = commandLine.join(' ');	
 	wmspyferret2.setParams({ command: command, variable: variable });
 	$('#title2').html(wmspyferret2.wmsParams.variable);   
 	$('#title2').attr('title', wmspyferret2.wmsParams.command + ' ' + wmspyferret2.wmsParams.variable);   

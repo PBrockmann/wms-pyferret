@@ -20,7 +20,8 @@ is the separator between commands and will determine the number of maps to be dr
 The qualifiers can include the title qualifier considering that the space character
 is not allowed since used to distinguish the cmd/qualifiers and the variable(s).
 For this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon).
-For example: 'shade/x=-180:180/y=-90:90/lev=20/title="Simulation&nbspA" varA'
+Please also notice that no surrounding quotes are allowed.
+For example: 'shade/x=-180:180/y=-90:90/lev=20/title=Simulation&nbspA varA'
 
 Options:
   --version        show program's version number and exit
@@ -40,8 +41,11 @@ Options:
 
 ![Screencast](https://github.com/PBrockmann/wms-pyferret/raw/master/screencast.gif)
 
+* Same as above with titles 
+```./pyferretWMS.py 'shade/x=-180:180/y=-90:90/lev=(-inf)(-10,30,1)(inf)/pal=mpl_PSU_inferno/title=Maximum temp[k=@max]; shade/x=-180:180/y=-90:90/lev=(-inf)(0,140,5)(inf)/pal=mpl_Seq1_RdPu/title=Temperature&nbspvariance temp[k=@var]; shade/x=-180:180/y=-90:90/lev=(-inf)(30,40,0.5)(inf)/pal=mpl_PSU_viridis/title=Surface&nbspsalinity salt[k=1]'```
+
 * Using a NEMO configuration (curvilinear grid) focussed on the Mediterranean sea:
-```./pyferretWMS.py --zoom 3 --center [40,15] --width 500 --env MED8.jnl 'shade/lev=20v/pal=mpl_PSU_inferno/title="O2" O2, nav_lon, nav_lat; shade/lev=20v/pal=mpl_PSU_viridis/title="NO3" NO3, nav_lon, nav_lat'```
+```./pyferretWMS.py --zoom 3 --center [40,15] --width 500 --env MED8.jnl 'shade/lev=20v/pal=mpl_PSU_inferno/title="O2" O2, nav_lon, nav_lat; shade/lev=20v/pal=mpl_PSU_viridis/title=NO3 NO3, nav_lon, nav_lat'```
 
 ![Capture](https://github.com/PBrockmann/wms-pyferret/raw/master/capture.png)
 
