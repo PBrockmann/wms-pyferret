@@ -77,6 +77,7 @@ conda install gunicorn
 <hr>
 2016/10/18
 
+* Add size option
 * Merge server mode as a new option (tag 0.9.4)
 * Colorbars are now created from workers that can handle either a GetColorBar or a GetMap request (tag 0.9.3)
 
