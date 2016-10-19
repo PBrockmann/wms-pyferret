@@ -185,10 +185,26 @@ def template_WMS_client():
     		font-size: 14px;
 		text-indent: 0px;
 	}
+	#dialog {
+		display: none;
+        	width: 200px;
+		height: 100px;
+    		font-size: 8px;
+	}
+	#commandLine {
+                width: 100%;
+    		font-size: 8px;
+	}
+	.ui-dialog { z-index: 1000 !important; }
+	.ui-dialog-title { font-size: 12px !important; }
     </style>
 </head>
 
 <body>
+
+<div id="dialog" title="Command detail">
+	<input id="commandLine" type="text" class="form-control" placeholder="New command">
+</div>
 
 {% for aDict in cmdArray -%}
 <div class='mapContainer'>
@@ -203,9 +219,12 @@ def template_WMS_client():
 //===============================================
 var crs = L.CRS.EPSG4326;
 
+var wmspyferret = [];
+var frontiers= [];
+
 {% for aDict in cmdArray -%}
 //===============================================
-var wmspyferret{{ loop.index }} = L.tileLayer.wms('http://localhost:8000', {
+wmspyferret[{{ loop.index }}] = L.tileLayer.wms('http://localhost:8000', {
 	command: '{{ aDict.command }}',
 	variable: '{{ aDict.variable }}',
     	crs: crs,
@@ -213,7 +232,7 @@ var wmspyferret{{ loop.index }} = L.tileLayer.wms('http://localhost:8000', {
 	transparent: true,
     	uppercase: true
 });
-var frontiers{{ loop.index }} = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
+frontiers[{{ loop.index }}] = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
 	layers: 'GCA:GCA_frontiersCountryAndRegions',
 	format: 'image/png',
     	crs: crs,
@@ -221,7 +240,7 @@ var frontiers{{ loop.index }} = L.tileLayer.wms('http://www.globalcarbonatlas.or
 });
 
 var map{{ loop.index }} = L.map('map{{ loop.index }}', {
-    layers: [wmspyferret{{ loop.index }}, frontiers{{ loop.index }}],
+    layers: [wmspyferret[{{ loop.index }}], frontiers[{{ loop.index }}]],
     crs: crs,
     center: {{ mapCenter }},
     zoom: {{ mapZoom }},
@@ -238,11 +257,42 @@ map{{ synchro[0] }}.sync(map{{ synchro[1] }});
 //===============================================
 {% for aDict in cmdArray -%}
 $('#title{{ loop.index }}').html('{{ aDict.title }}');   
-$('#title{{ loop.index }}').attr('title', wmspyferret{{ loop.index }}.wmsParams.command + ' ' + wmspyferret{{ loop.index }}.wmsParams.variable);   
+$('#title{{ loop.index }}').attr('title', wmspyferret[{{ loop.index }}].wmsParams.command + ' ' + wmspyferret[{{ loop.index }}].wmsParams.variable);   
 $('#key{{ loop.index }}').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
-                                                '&COMMAND=' + wmspyferret{{ loop.index }}.wmsParams.command +  
-                                                '&VARIABLE=' + wmspyferret{{ loop.index }}.wmsParams.variable);
+                                                '&COMMAND=' + wmspyferret[{{ loop.index }}].wmsParams.command +  
+                                                '&VARIABLE=' + wmspyferret[{{ loop.index }}].wmsParams.variable);
 {% endfor %}
+
+//===============================================
+$(".title").on('click', function() {
+	$('#dialog').dialog({modal: true, position: ['center', 'top']});
+	var id = $(this).attr('id');
+	$('#commandLine').val($('#'+id).attr('title'));
+	$('#commandLine').attr('mapId', id.replace('title',''));
+});
+
+//===============================================
+$('#commandLine').on('keypress', function(e) {
+    if(e.which === 13) {
+        commandLine = $(this).val().split(' ');
+        command = commandLine[0];
+        commandLine.shift();
+        variable = commandLine.join(' ');       
+	mapId = $(this).attr('mapId');
+        wmspyferret[mapId].setParams({ command: command, variable: variable });
+	// Inspect command to get /title qualifier if present
+	m = command.match(/title=([\w&]+)/);		// equivalent to search in python
+	if (m != null)
+		title = m[1]
+	else 
+		title = variable 
+        $('#title'+mapId).html(title);   
+        $('#title'+mapId).attr('title', command + ' ' + variable);   
+        $('#key'+mapId).html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
+                                                        '&COMMAND=' + command +  
+                                                        '&VARIABLE=' + variable + '" />');
+    }
+});
 
 //===============================================
 var exec = require('child_process').exec,child;
