@@ -13,8 +13,6 @@
 
     <script src='http://cdn.rawgit.com/turban/Leaflet.Sync/0.0.5/L.Map.Sync.js'></script>
 
-    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.css' />
-
     <style type='text/css'>
         html, body { font-family: 'arial' }
         .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px;}
@@ -35,15 +33,24 @@
 		display: block;
 		margin: 30px 0 0 0;
 	}
-	#commandLine {
-		margin-left: 10px;
-		margin-top: 40px;
-    		width: 600px;
-	}
+	#dialog {
+                display: none;
+                font-size: 8px;
+        }
+        #commandLine {
+                width: 100%;
+                font-size: 8px;
+        }
+        .ui-dialog { z-index: 1000 !important; }
+        .ui-dialog-title { font-size: 12px !important; }
     </style>
 </head>
 
 <body>
+
+<div id="dialog">
+	<input id="commandLine" type="text" placeholder="New command">
+</div>
 
 <div class='mapContainer'>
    <div id='title1' class='title'></div>
@@ -57,16 +64,16 @@
    <div id='key2' class='key'></div>
 </div>
 
-<input id="commandLine" type="text" class="form-control" placeholder="New command for map2">
-
 <script type='text/javascript'>
 
 //===============================================
 var crs = L.CRS.EPSG4326;
 
+var wmspyferret = [];
+var frontiers= [];
 
 //===============================================
-var wmspyferret1 = L.tileLayer.wms('http://localhost:8000', {
+wmspyferret[1] = L.tileLayer.wms('http://localhost:8000', {
 	command: 'shade/x=-180:180/y=-90:90/lev=20/pal=mpl_PSU_inferno',
 	variable: 'temp[k=1]',
     	crs: crs,
@@ -74,7 +81,7 @@ var wmspyferret1 = L.tileLayer.wms('http://localhost:8000', {
 	transparent: true,
     	uppercase: true
 });
-var frontiers1 = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
+frontiers[1] = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
 	layers: 'GCA:GCA_frontiersCountryAndRegions',
 	format: 'image/png',
     	crs: crs,
@@ -82,7 +89,7 @@ var frontiers1 = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserve
 });
 
 var map1 = L.map('map1', {
-    layers: [wmspyferret1, frontiers1],
+    layers: [wmspyferret[1], frontiers[1]],
     crs: crs,
     center: [0,-40],
     zoom: 1,
@@ -90,7 +97,7 @@ var map1 = L.map('map1', {
 });
 
 //===============================================
-var wmspyferret2 = L.tileLayer.wms('http://localhost:8000', {
+wmspyferret[2] = L.tileLayer.wms('http://localhost:8000', {
 	command: 'shade/x=-180:180/y=-90:90/lev=20/pal=mpl_Seq1_RdPu',
 	variable: 'salt[k=1]',
     	crs: crs,
@@ -98,7 +105,7 @@ var wmspyferret2 = L.tileLayer.wms('http://localhost:8000', {
 	transparent: true,
     	uppercase: true
 });
-var frontiers2 = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
+frontiers[2] = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
 	layers: 'GCA:GCA_frontiersCountryAndRegions',
 	format: 'image/png',
     	crs: crs,
@@ -106,7 +113,7 @@ var frontiers2 = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserve
 });
 
 var map2 = L.map('map2', {
-    layers: [wmspyferret2, frontiers2],
+    layers: [wmspyferret[2], frontiers[2]],
     crs: crs,
     center: [0,-40],
     zoom: 1,
@@ -120,32 +127,48 @@ map1.sync(map2);
 map2.sync(map1);
 
 //===============================================
-$('#title1').html(wmspyferret1.wmsParams.variable);   
-$('#title1').attr('title', wmspyferret1.wmsParams.command + ' ' + wmspyferret1.wmsParams.variable);   
+$('#title1').html(wmspyferret[1].wmsParams.variable);   
+$('#title1').attr('title', wmspyferret[1].wmsParams.command + ' ' + wmspyferret[1].wmsParams.variable);   
 $('#key1').html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
-							'&COMMAND=' + wmspyferret1.wmsParams.command +  
-							'&VARIABLE=' + wmspyferret1.wmsParams.variable + '" />');
+							'&COMMAND=' + wmspyferret[1].wmsParams.command +  
+							'&VARIABLE=' + wmspyferret[1].wmsParams.variable + '" />');
 
-$('#title2').html(wmspyferret2.wmsParams.variable);   
-$('#title2').attr('title', wmspyferret2.wmsParams.command + ' ' + wmspyferret2.wmsParams.variable);   
+$('#title2').html(wmspyferret[2].wmsParams.variable);   
+$('#title2').attr('title', wmspyferret[2].wmsParams.command + ' ' + wmspyferret[2].wmsParams.variable);   
 $('#key2').html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
-							'&COMMAND=' + wmspyferret2.wmsParams.command +  
-							'&VARIABLE=' + wmspyferret2.wmsParams.variable + '" />');
+							'&COMMAND=' + wmspyferret[2].wmsParams.command +  
+							'&VARIABLE=' + wmspyferret[2].wmsParams.variable + '" />');
 
-$('#commandLine').val(wmspyferret2.wmsParams.command + ' ' + wmspyferret2.wmsParams.variable);   
+//===============================================
+$(".title").on('click', function() {
+        id = $(this).attr('id');
+	mapId = id.replace('title','');
+        $('#commandLine').val($('#'+id).attr('title'));
+        $('#commandLine').attr('mapId', mapId);
+        $('#dialog').dialog({ title: 'Command of map #'+mapId, modal: true, width: 600, height: 100, 
+			      position: {my: "left", at: "left+10", of: window} });
+});
 
+//===============================================
 $('#commandLine').on('keypress', function(e) {
     if(e.which === 13) {
-	commandLine = $(this).val().split(' ');
-	command = commandLine[0];
-	commandLine.shift();
-	variable = commandLine.join(' ');	
-	wmspyferret2.setParams({ command: command, variable: variable });
-	$('#title2').html(wmspyferret2.wmsParams.variable);   
-	$('#title2').attr('title', wmspyferret2.wmsParams.command + ' ' + wmspyferret2.wmsParams.variable);   
-	$('#key2').html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
-							'&COMMAND=' + wmspyferret2.wmsParams.command +  
-							'&VARIABLE=' + wmspyferret2.wmsParams.variable + '" />');
+        commandLine = $(this).val().split(' ');
+        command = commandLine[0];
+        commandLine.shift();
+        variable = commandLine.join(' ');       
+        mapId = $(this).attr('mapId');
+        wmspyferret[mapId].setParams({ command: command, variable: variable });
+        // Inspect command to get /title qualifier if present
+        m = command.match(/title=([\w&]+)/);            // equivalent to search in python
+        if (m != null)
+                title = m[1]
+        else 
+                title = variable 
+        $('#title'+mapId).html(title);   
+        $('#title'+mapId).attr('title', command + ' ' + variable);   
+        $('#key'+mapId).html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
+                                                        '&COMMAND=' + command +  
+                                                        '&VARIABLE=' + variable + '" />');
     }
 });
 

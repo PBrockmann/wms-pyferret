@@ -75,6 +75,11 @@ conda install gunicorn
 
 ####Releases notes
 <hr>
+2016/10/19
+
+* Add access to command for each map
+
+<hr>
 2016/10/18
 
 * Add size option

@@ -187,8 +187,6 @@ def template_WMS_client():
 	}
 	#dialog {
 		display: none;
-        	width: 200px;
-		height: 100px;
     		font-size: 8px;
 	}
 	#commandLine {
@@ -202,8 +200,8 @@ def template_WMS_client():
 
 <body>
 
-<div id="dialog" title="Command detail">
-	<input id="commandLine" type="text" class="form-control" placeholder="New command">
+<div id="dialog">
+	<input id="commandLine" type="text" placeholder="New command">
 </div>
 
 {% for aDict in cmdArray -%}
@@ -265,10 +263,12 @@ $('#key{{ loop.index }}').children('img').attr('src', 'http://localhost:8000/?SE
 
 //===============================================
 $(".title").on('click', function() {
-	$('#dialog').dialog({modal: true, position: ['center', 'top']});
-	var id = $(this).attr('id');
+	id = $(this).attr('id');
+	mapId = id.replace('title','');
 	$('#commandLine').val($('#'+id).attr('title'));
-	$('#commandLine').attr('mapId', id.replace('title',''));
+	$('#commandLine').attr('mapId', mapId);
+	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: true, width: 600, height: 100, 
+			      position: {my: "left", at: "left+10", of: window} });
 });
 
 //===============================================
