@@ -187,11 +187,11 @@ def template_WMS_client():
 	}
 	#dialog {
 		display: none;
-    		font-size: 8px;
+		font-size: 12px;
 	}
 	#commandLine {
                 width: 100%;
-    		font-size: 8px;
+		font-size: 12px;
 	}
 	.ui-dialog { z-index: 1000 !important; }
 	.ui-dialog-title { font-size: 12px !important; }
@@ -267,7 +267,7 @@ $(".title").on('click', function() {
 	mapId = id.replace('title','');
 	$('#commandLine').val($('#'+id).attr('title'));
 	$('#commandLine').attr('mapId', mapId);
-	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: true, width: 600, height: 100, 
+	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 100, 
 			      position: {my: "left", at: "left+10", of: window} });
 });
 
