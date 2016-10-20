@@ -55,13 +55,13 @@
 <div class='mapContainer'>
    <div id='title1' class='title'></div>
    <div id='map1' class='map'></div>
-   <div id='key1' class='key'></div>
+   <div id='key1' class='key'><img /></div>
 </div>
 
 <div class='mapContainer'>
    <div id='title2' class='title'></div>
    <div id='map2' class='map'></div>
-   <div id='key2' class='key'></div>
+   <div id='key2' class='key'><img /></div>
 </div>
 
 <script type='text/javascript'>
@@ -129,15 +129,15 @@ map2.sync(map1);
 //===============================================
 $('#title1').html(wmspyferret[1].wmsParams.variable);   
 $('#title1').attr('title', wmspyferret[1].wmsParams.command + ' ' + wmspyferret[1].wmsParams.variable);   
-$('#key1').html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
-							'&COMMAND=' + wmspyferret[1].wmsParams.command +  
-							'&VARIABLE=' + wmspyferret[1].wmsParams.variable + '" />');
+$('#key1').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+						'&COMMAND=' + wmspyferret[1].wmsParams.command +
+						'&VARIABLE=' + wmspyferret[1].wmsParams.variable);
 
 $('#title2').html(wmspyferret[2].wmsParams.variable);   
 $('#title2').attr('title', wmspyferret[2].wmsParams.command + ' ' + wmspyferret[2].wmsParams.variable);   
-$('#key2').html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
-							'&COMMAND=' + wmspyferret[2].wmsParams.command +  
-							'&VARIABLE=' + wmspyferret[2].wmsParams.variable + '" />');
+$('#key2').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+						'&COMMAND=' + wmspyferret[2].wmsParams.command +
+						'&VARIABLE=' + wmspyferret[2].wmsParams.variable);
 
 //===============================================
 $(".title").on('click', function() {
@@ -145,7 +145,7 @@ $(".title").on('click', function() {
 	mapId = id.replace('title','');
         $('#commandLine').val($('#'+id).attr('title'));
         $('#commandLine').attr('mapId', mapId);
-        $('#dialog').dialog({ title: 'Command of map #'+mapId, modal: true, width: 600, height: 100, 
+        $('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 100,
 			      position: {my: "left", at: "left+10", of: window} });
 });
 
@@ -166,9 +166,9 @@ $('#commandLine').on('keypress', function(e) {
                 title = variable 
         $('#title'+mapId).html(title);   
         $('#title'+mapId).attr('title', command + ' ' + variable);   
-        $('#key'+mapId).html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
-                                                        '&COMMAND=' + command +  
-                                                        '&VARIABLE=' + variable + '" />');
+        $('#key'+mapId).children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+							'&COMMAND=' + command +
+							'&VARIABLE=' + variable);
     }
 });
 

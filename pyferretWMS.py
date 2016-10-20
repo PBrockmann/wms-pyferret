@@ -42,6 +42,7 @@ def handler_app(environ, start_response):
                 tmpname = os.path.basename(tmpname)
 
 		#print(fields['REQUEST'] + ': ' + COMMAND + ' ' + VARIABLE)
+
 		if fields['REQUEST'] == 'GetColorBar':
                 	pyferret.run('set window/aspect=1/outline=0')
                 	pyferret.run('go margins 2 4 3 3')
@@ -256,9 +257,9 @@ map{{ synchro[0] }}.sync(map{{ synchro[1] }});
 {% for aDict in cmdArray -%}
 $('#title{{ loop.index }}').html('{{ aDict.title }}');   
 $('#title{{ loop.index }}').attr('title', wmspyferret[{{ loop.index }}].wmsParams.command + ' ' + wmspyferret[{{ loop.index }}].wmsParams.variable);   
-$('#key{{ loop.index }}').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
-                                                '&COMMAND=' + wmspyferret[{{ loop.index }}].wmsParams.command +  
-                                                '&VARIABLE=' + wmspyferret[{{ loop.index }}].wmsParams.variable);
+$('#key{{ loop.index }}').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+							'&COMMAND=' + wmspyferret[{{ loop.index }}].wmsParams.command +
+							'&VARIABLE=' + wmspyferret[{{ loop.index }}].wmsParams.variable);
 {% endfor %}
 
 //===============================================
@@ -287,10 +288,10 @@ $('#commandLine').on('keypress', function(e) {
 	else 
 		title = variable 
         $('#title'+mapId).html(title);   
-        $('#title'+mapId).attr('title', command + ' ' + variable);   
-        $('#key'+mapId).html('<img src="http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' + 
-                                                        '&COMMAND=' + command +  
-                                                        '&VARIABLE=' + variable + '" />');
+        $('#title'+mapId).attr('title', command + ' ' + variable);
+        $('#key'+mapId).children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+							'&COMMAND=' + command +
+							'&VARIABLE=' + variable);
     }
 });
 
