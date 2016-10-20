@@ -255,8 +255,20 @@ map[{{ synchro[0] }}].sync(map[{{ synchro[1] }}]);
 {% endfor %}
 
 //===============================================
+function getTitle(aCommand, aVariable) {
+	// Inspect command to get /title qualifier if present
+	m = aCommand.match(/title=([\w&]+)/);		// equivalent to search in python
+	if (m != null)
+		title = m[1]
+	else 
+		title = aVariable 
+	return title
+}
+
+//===============================================
 {% for aDict in cmdArray -%}
-$('#title{{ loop.index }}').html('{{ aDict.title }}');   
+title{{ loop.index }} = getTitle(wmspyferret[{{ loop.index }}].wmsParams.command, wmspyferret[{{ loop.index }}].wmsParams.variable.replace('%2B','+'));
+$('#title{{ loop.index }}').html(title{{ loop.index }});   
 $('#title{{ loop.index }}').attr('title', wmspyferret[{{ loop.index }}].wmsParams.command + ' ' + wmspyferret[{{ loop.index }}].wmsParams.variable.replace('%2B','+'));   
 $('#key{{ loop.index }}').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
 							'&COMMAND=' + wmspyferret[{{ loop.index }}].wmsParams.command +
@@ -282,12 +294,7 @@ $('#commandLine').on('keypress', function(e) {
         variable = commandLine.join(' ');       
 	mapId = $(this).attr('mapId');
         wmspyferret[mapId].setParams({ command: command, variable: variable.replace('+','%2B') });
-	// Inspect command to get /title qualifier if present
-	m = command.match(/title=([\w&]+)/);		// equivalent to search in python
-	if (m != null)
-		title = m[1]
-	else 
-		title = variable 
+	title = getTitle(command, variable);
         $('#title'+mapId).html(title);   
         $('#title'+mapId).attr('title', command + ' ' + variable);
 	$('#key'+mapId).children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
@@ -416,20 +423,13 @@ else:
 		parser.print_help()
 		sys.exit(1)
 	
-	# create array of dict {'command', 'variable', 'title'}
+	# create array of dict {'command', 'variable'}
 	for i,cmd in enumerate(cmds, start=1):
 		# Get command
 		command = cmd.split(' ')[0]			
 		# Get variable
 		variable = ' '.join(cmd.split(' ')[1:])
-		# Inspect command to get /title qualifier if present
-	        m = re.search('/title=([\w&]+)', command)	# [\w&] = alphanumeric and & (for html entities like &nbsp)
-	        if m:
-	           title = m.group(1)
-	        else:
-	           title = variable
-		# Append to array
-		cmdArray.append({'command': command, 'variable': variable, 'title': title})
+		cmdArray.append({'command': command, 'variable': variable})
 
 #------------------------------------------------------
 options = {

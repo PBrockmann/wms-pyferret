@@ -124,13 +124,26 @@ map[1].sync(map[2]);
 map[2].sync(map[1]);
 
 //===============================================
-$('#title1').html(wmspyferret[1].wmsParams.variable.replace('%2B','+'));   
+function getTitle(aCommand, aVariable) {
+	// Inspect command to get /title qualifier if present
+	m = aCommand.match(/title=([\w&]+)/);		// equivalent to search in python
+	if (m != null)
+		title = m[1]
+	else 
+		title = aVariable 
+	return title
+}
+
+//===============================================
+title1 = getTitle(wmspyferret[1].wmsParams.command, wmspyferret[1].wmsParams.variable.replace('%2B','+'));
+$('#title1').html(title1);
 $('#title1').attr('title', wmspyferret[1].wmsParams.command + ' ' + wmspyferret[1].wmsParams.variable.replace('%2B','+'));   
 $('#key1').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
 						'&COMMAND=' + wmspyferret[1].wmsParams.command +
 						'&VARIABLE=' + wmspyferret[1].wmsParams.variable.replace('+','%2B'));
 
-$('#title2').html(wmspyferret[2].wmsParams.variable.replace('%2B','+'));   
+title2 = getTitle(wmspyferret[2].wmsParams.command, wmspyferret[2].wmsParams.variable.replace('%2B','+'));
+$('#title2').html(title2);
 $('#title2').attr('title', wmspyferret[2].wmsParams.command + ' ' + wmspyferret[2].wmsParams.variable.replace('%2B','+'));   
 $('#key2').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
 						'&COMMAND=' + wmspyferret[2].wmsParams.command +
@@ -155,12 +168,7 @@ $('#commandLine').on('keypress', function(e) {
         variable = commandLine.join(' ');       
 	mapId = $(this).attr('mapId');
         wmspyferret[mapId].setParams({ command: command, variable: variable.replace('+','%2B') });
-	// Inspect command to get /title qualifier if present
-	m = command.match(/title=([\w&]+)/);		// equivalent to search in python
-	if (m != null)
-		title = m[1]
-	else 
-		title = variable 
+	title = getTitle(command, variable);
         $('#title'+mapId).html(title);   
         $('#title'+mapId).attr('title', command + ' ' + variable);
 	$('#key'+mapId).children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
