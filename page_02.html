@@ -198,8 +198,8 @@ $('#variable').on('change', function() {
 	for (mapId = 1; mapId <= 2 ; mapId++) { 
 		command = wmspyferret[mapId].wmsParams.command;
 		variable = wmspyferret[mapId].wmsParams.variable.replace('%2B','+');
-		title = getTitle(command, variable);
 		variable = variable.replace(variableDisplayed, variableToDisplay)
+		title = getTitle(command, variable);
         	wmspyferret[mapId].setParams({ variable: variable.replace('+','%2B') });
         	$('#title'+mapId).html(title);   
         	$('#title'+mapId).attr('title', command + ' ' + variable);
