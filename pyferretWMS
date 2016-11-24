@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# pyferretWMS   gunicorn server from pyferretWMS.py
+#
+# chkconfig: 5 70 30
+# description: A gunicorn server that implement WMS with use of pyferret to create tiles
+# processname: pyferretWMS
+
+# Source function library.
+. /etc/init.d/functions
+
+RETVAL=0
+service=pyferretWMS
+DIR=/var/www/html/ScientificApps/dev/forge_patrick/wms-pyferret
+
+case "$1" in
+    start)
+        echo "Starting $service"
+        if [ ! -e /var/run/$service.pid ]; then
+                export PATH="/home/webportals/anaconda2/bin:$PATH"
+                . /home/webportals/PyFerret-7.0.0-RHEL6-64/ferret_paths.sh
+                $DIR/pyferretWMS.py --server --env=$DIR/pyferretWMS.jnl &
+                echo $! > /var/run/$service.pid
+        else
+           echo $service is already running
+           exit 1
+        fi
+        ;;
+    stop)
+        echo "Shutting down $service"
+        kill `cat /var/run/$service.pid`
+        rm /var/run/$service.pid
+        ;;
+    status)
+        echo "Checking $service status"
+        if [ -e /var/run/$service.pid ]; then
+           echo $service is running, pid=`cat /var/run/$service.pid`
+        else
+           echo $service is NOT running
+           exit 1
+        fi
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "Usage: $service {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+exit
