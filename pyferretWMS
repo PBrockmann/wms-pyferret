@@ -6,6 +6,11 @@
 # description: A gunicorn server that implement WMS with use of pyferret to create tiles
 # processname: pyferretWMS
 
+# ==================================
+# sudo chkconfig --add pyferretWMS
+# service pyferretWMS {start|stop|status|restart}
+
+# ==================================
 # Source function library.
 . /etc/init.d/functions
 
@@ -42,6 +47,7 @@ case "$1" in
         ;;
     restart)
         $0 stop
+        sleep 5s
         $0 start
         ;;
     *)
