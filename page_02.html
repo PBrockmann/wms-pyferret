@@ -197,10 +197,10 @@ $('#variable').on('change', function() {
 
 	for (mapId = 1; mapId <= 2 ; mapId++) { 
 		command = wmspyferret[mapId].wmsParams.command;
-		variable = wmspyferret[mapId].wmsParams.variable;
+		variable = wmspyferret[mapId].wmsParams.variable.replace('%2B','+');
+		title = getTitle(command, variable);
 		variable = variable.replace(variableDisplayed, variableToDisplay)
         	wmspyferret[mapId].setParams({ variable: variable.replace('+','%2B') });
-		title = getTitle(command, variable);
         	$('#title'+mapId).html(title);   
         	$('#title'+mapId).attr('title', command + ' ' + variable);
 		$('#key'+mapId).children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
