@@ -119,7 +119,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
     			f.write(instance_WMS_Client.render(cmdArray=cmdArray, gunicornPID=master_pid, 
 							   listSynchroMapsToSet=listSynchroMapsToSet,
 							   mapWidth=mapWidth, mapHeight=mapHeight, 
-							   mapCenter=mapCenter, mapZoom=mapZoom))
+							   mapCenter=mapCenter, mapZoom=mapZoom, port=port))
 		with open(tmpdir + '/package.json', 'wb') as f:
     			f.write(instance_NW_Package.render(nbMaps=nbMaps,
 							   mapWidth=mapWidth, mapHeight=mapHeight))
@@ -224,7 +224,7 @@ var frontiers= [];
 
 {% for aDict in cmdArray -%}
 //===============================================
-wmspyferret[{{ loop.index }}] = L.tileLayer.wms('http://localhost:8000', {
+wmspyferret[{{ loop.index }}] = L.tileLayer.wms('http://localhost:{{ port }}', {
 	command: '{{ aDict.command }}',
 	variable: '{{ aDict.variable }}',
     	crs: crs,
@@ -270,7 +270,7 @@ function getTitle(aCommand, aVariable) {
 title{{ loop.index }} = getTitle(wmspyferret[{{ loop.index }}].wmsParams.command, wmspyferret[{{ loop.index }}].wmsParams.variable.replace('%2B','+'));
 $('#title{{ loop.index }}').html(title{{ loop.index }});   
 $('#title{{ loop.index }}').attr('title', wmspyferret[{{ loop.index }}].wmsParams.command + ' ' + wmspyferret[{{ loop.index }}].wmsParams.variable.replace('%2B','+'));   
-$('#key{{ loop.index }}').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+$('#key{{ loop.index }}').children('img').attr('src', 'http://localhost:{{ port }}/?SERVICE=WMS&REQUEST=GetColorBar' +
 							'&COMMAND=' + wmspyferret[{{ loop.index }}].wmsParams.command +
 							'&VARIABLE=' + wmspyferret[{{ loop.index }}].wmsParams.variable.replace('+','%2B'));
 {% endfor %}
@@ -297,7 +297,7 @@ $('#commandLine').on('keypress', function(e) {
 	title = getTitle(command, variable);
         $('#title'+mapId).html(title);   
         $('#title'+mapId).attr('title', command + ' ' + variable);
-	$('#key'+mapId).children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+	$('#key'+mapId).children('img').attr('src', 'http://localhost:{{ port }}/?SERVICE=WMS&REQUEST=GetColorBar' +
 							'&COMMAND=' + command +
 							'&VARIABLE=' + variable.replace('+','%2B'));
     }
@@ -347,7 +347,7 @@ usage = "%prog [--env=script.jnl] [--width=400] [--height=400] [--size=value] [-
 	"\nFor this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon)." + \
 	"\nFor example: 'shade/lev=20/title=Simulation&nbspA varA; shade/lev=20/title=Simulation&nbspB varB'"
 
-version = "%prog 0.9.5"
+version = "%prog 0.9.6"
 
 #------------------------------------------------------
 parser = OptionParser(usage=usage, version=version)
@@ -366,6 +366,8 @@ parser.add_option("--zoom", type="int", dest="zoom", default=1,
 		help="Initial zoom of maps (default=1)")
 parser.add_option("--server", dest="serverOnly", action="store_true", default=False,
 		help="Server only (default=False)")
+parser.add_option("--port", type="int", dest="port", default=8000,
+		help="Server port number (default=8000)")
 
 (options, args) = parser.parse_args()
 
@@ -380,6 +382,7 @@ mapCenter = options.center
 mapZoom = options.zoom
 envScript = options.envScript
 serverOnly = options.serverOnly
+port = options.port
 
 #------------------------------------------------------
 # Global variables
@@ -433,7 +436,7 @@ else:
 
 #------------------------------------------------------
 options = {
-    'bind': '%s:%s' % ('127.0.0.1', '8000'),
+    'bind': '%s:%s' % ('127.0.0.1', port),
     'workers': number_of_workers(),
     'worker_class': 'sync',
     'threads': 1 
