@@ -337,8 +337,9 @@ def template_nw_package():
 from optparse import OptionParser
 
 #------------------------------------------------------
-usage = "%prog [--env=script.jnl] [--width=400] [--height=400] [--size=value] [--center=[0,0]] [--zoom=1] [--server]" + \
-	"\n                              'cmd/qualifiers variable; cmd/qualifiers variable'" + \
+usage = "%prog [--width=400] [--height=400] [--size=value] [--center=[0,0]] [--zoom=1]" + \
+	"\n                      [--env=pyferretWMS.jnl] [--server] [--port=8000]" + \
+	"\n                      'cmd/qualifiers variable; cmd/qualifiers variable'" + \
 	"\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to" + \
 	"\nseparate the variable from the command and its qualifiers). The semi-colon character ';'" +\
 	"\nis the separator between commands and will determine the number of maps to be drawn." + \

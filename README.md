@@ -11,8 +11,9 @@ Slippy maps avoid command-line typing and display loops and hopefully will help 
 
 ####Usage
 ```
-Usage: pyferretWMS.py [--env=script.jnl] [--width=400] [--height=400] [--size=value] [--center=[0,0]] [--zoom=1] [--server]
-                              'cmd/qualifiers variable; cmd/qualifiers variable'
+Usage: pyferretWMS.py [--width=400] [--height=400] [--size=value] [--center=[0,0]] [--zoom=1]
+                      [--env=pyferretWMS.jnl] [--server] [--port=8000]
+                      'cmd/qualifiers variable; cmd/qualifiers variable'
 
 'cmd/qualifiers variable' is a classic ferret call (no space allowed except to
 separate the variable from the command and its qualifiers). The semi-colon character ';'
@@ -34,6 +35,7 @@ Options:
   --center=CENTER  Initial center of maps as [lat, lon] (default=[0,-40])
   --zoom=ZOOM      Initial zoom of maps (default=1)
   --server         Server only (default=False)
+  --port=PORT      Server port number (default=8000)
 ```
 
 ####Examples
@@ -76,6 +78,11 @@ conda install gunicorn
 
 ####Releases notes
 <hr>
+2016/11/25
+
+* Add port number option (tag 0.9.6)
+* Add daemon file to set a service with pyferretWMS
+
 2016/10/19
 
 * Add access to command when click on title map (tag 0.9.5)
