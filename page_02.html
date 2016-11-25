@@ -170,7 +170,7 @@ $(".title").on('click', function() {
 	$('#commandLine').val($('#'+id).attr('title'));
 	$('#commandLine').attr('mapId', mapId);
 	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 100,
-			      position: {my: "left", at: "left+10", of: window} });
+			      position: {my: "left+30 top+30", at: "left", of: this} });
 });
 
 //===============================================
