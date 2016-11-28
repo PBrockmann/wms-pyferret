@@ -168,7 +168,7 @@ def template_WMS_client():
     <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.2/leaflet.css' />
     <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.2/leaflet.js'></script>
 
-    <script src='http://cdn.rawgit.com/turban/Leaflet.Sync/0.0.5/L.Map.Sync.js'></script>
+    <script src='http://cdn.rawgit.com/turban/Leaflet.Sync/master/L.Map.Sync.js'></script>
 
     <style type='text/css'>
         html, body { font-family: 'arial' }
