@@ -232,7 +232,7 @@ wmspyferret[{{ loop.index }}] = L.tileLayer.wms('http://localhost:{{ port }}', {
 	transparent: true,
     	uppercase: true
 });
-frontiers[{{ loop.index }}] = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
+frontiers[{{ loop.index }}] = L.tileLayer.wms('http://www.globalcarbonatlas.org/geoserver/GCA/wms', {
 	layers: 'GCA:GCA_frontiersCountryAndRegions',
 	format: 'image/png',
     	crs: crs,
