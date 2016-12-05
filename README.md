@@ -2,6 +2,8 @@
 ###Display synchronous slippy maps from ferret variables
 *Patrick Brockmann - LSCE*
 
+[![DOI](https://zenodo.org/badge/67513498.svg)](https://zenodo.org/badge/latestdoi/67513498)
+
 ####Motivation
 The motivation is to render variables read and computed from pyferret as slippy maps. This can be done directly from the memory without having to save them in netCDF files and expose them through a Thredds server to get a Web Map Service.
 
