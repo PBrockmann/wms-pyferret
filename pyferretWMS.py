@@ -38,11 +38,15 @@ def handler_app(environ, start_response):
 
         	pyferret.run('go ' + envScript)                 # load the environment (dataset to open + variables definition)
 
+		try:
+        		MASK = fields['MASK']
+		except:
+        		MASK = None
+
                 tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
                 tmpname = os.path.basename(tmpname)
 
-		#print(fields['REQUEST'] + ': ' + COMMAND + ' ' + VARIABLE)
-
+		#---------------------------------------------------------
 		if fields['REQUEST'] == 'GetColorBar':
                 	pyferret.run('set window/aspect=1/outline=0')
                 	pyferret.run('go margins 2 4 3 3')
@@ -55,6 +59,7 @@ def handler_app(environ, start_response):
                 	area = im.crop(box)
                 	area.save(tmpdir + '/' + tmpname, "PNG")
 
+		#---------------------------------------------------------
 		elif fields['REQUEST'] == 'GetMap':
         		WIDTH = int(fields['WIDTH'])
         		HEIGHT = int(fields['HEIGHT'])
@@ -70,18 +75,26 @@ def handler_app(environ, start_response):
                 	pyferret.run(COMMAND +  '/noaxis/nolab/nokey' + HLIM + VLIM + ' ' + VARIABLE)
                 	pyferret.run('frame/format=PNG/transparent/xpixels=' + str(WIDTH) + '/file="' + tmpdir + '/' + tmpname + '"')
 
+	        	if os.path.isfile(tmpdir + '/' + tmpname):
+				if MASK:
+					img = Image.open(tmpdir + '/' + tmpname)
+	        	        	mask = Image.open(MASK)
+					img = Image.composite(img, mask, mask)
+					img.save(tmpdir + '/' + tmpname)
+	
+		#---------------------------------------------------------
 		else:
 			raise
 
-                if os.path.isfile(tmpdir + '/' + tmpname):
-                        ftmp = open(tmpdir + '/' + tmpname, 'rb')
-                        img = ftmp.read()
-                        ftmp.close()
-                        os.remove(tmpdir + '/' + tmpname)
-      
-                start_response('200 OK', [('content-type', 'image/png')])
-                return iter(img) 
-    
+		if os.path.isfile(tmpdir + '/' + tmpname):
+			ftmp = open(tmpdir + '/' + tmpname, 'rb')
+			img = ftmp.read()
+			ftmp.close()
+			os.remove(tmpdir + '/' + tmpname)
+
+		start_response('200 OK', [('content-type', 'image/png')])
+		return iter(img) 
+
         except:
                 return iter('Exception caught')
 
