@@ -80,11 +80,18 @@ conda install gunicorn
 
 ####Releases notes
 <hr>
+2017/01/23
+
+* Add a 3rd example with dynamic creation of maps
+* Add resizable properties to maps (page_03.html)
+
+<hr>
 2016/11/25
 
 * Add port number option (tag 0.9.6)
 * Add daemon file to set a service with pyferretWMS
 
+<hr>
 2016/10/19
 
 * Add access to command when click on title map (tag 0.9.5)

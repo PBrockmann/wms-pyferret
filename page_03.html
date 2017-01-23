@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Slippy maps with WMS from pyferret</title>
+
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' />
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
+
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.2/leaflet.css' />
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.2/leaflet.js'></script>
+
+    <script src='http://cdn.rawgit.com/turban/Leaflet.Sync/0.0.5/L.Map.Sync.js'></script>
+
+    <style type='text/css'>
+        html, body { font-family: 'arial' }
+        .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px;}
+        .title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width:  200px; }
+        .map { width: 400px; height: 400px; }
+        .key { text-align: center; margin: auto; }
+        .key img { width: 400px; height: 50px; max-width: 400px; }
+	.leaflet-bar a, .leaflet-bar a:hover {
+    		height: 16px;
+    		line-height: 16px;
+    		width: 16px;
+	}
+	.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+    		font-size: 14px;
+		text-indent: 0px;
+	}
+	#dialog {
+		display: none;
+		font-size: 12px;
+	}
+	#commandLine {
+                width: 100%;
+		font-size: 12px;
+	}
+	.ui-dialog { z-index: 1000 !important; }
+	.ui-dialog-title { font-size: 12px !important; }
+	.ui-icon-gripsmall-diagonal-se {
+		z-index: 1000 !important;
+	}
+	p label { display: block;
+		float: left;
+		width: 100px;
+	}
+    </style>
+</head>
+
+<body>
+
+<div id="dialog">
+	<input id="commandLine" type="text" placeholder="New command">
+</div>
+
+<p>
+<label>File:</label>
+<input type="text" id="file" value="levitus_climatology"/ style="width: 600px;">
+</p>
+
+<p>
+<label>Command:</label>
+<input type="text" id="command" value="shade/x=-180:180/y=-90:90/lev=20v/pal=mpl_PSU_inferno"/ style="width: 600px;">
+</p>
+
+<p>
+<label>Variable:</label>
+<input type="text" id="variable" value="temp[k=@max]" pattern="[a-z0-9@+-/*]" style="width: 600px;"\>
+</p>
+
+<p>
+<input type="submit" id="addMap" value="Insert a map"/> 
+</p>
+
+<div id="mapSpace"></div>
+
+<script type='text/javascript'>
+
+//===============================================
+var crs = L.CRS.EPSG4326;
+
+var Id = 0;
+var map = {};			// associative array
+var wmspyferret = {};
+var frontiers = {};
+var width = 400;
+var height = 400;
+
+//===============================================
+function syncMaps() {			// do all synchronizations (less efficient than a python itertools.permutations)
+	listIds = Object.keys(map);
+	//console.log(listIds);
+	for (i in listIds) {
+		for (j in listIds) {
+			if (i != j) {
+				map[listIds[i]].sync(map[listIds[j]]);
+			}
+		}
+	}
+}
+
+//===============================================
+function getTitle(aCommand, aVariable) {
+	// Inspect command to get /title qualifier if present
+	m = aCommand.match(/title=([\w&]+)/);		// equivalent to search in python
+	if (m != null)
+		title = m[1]
+	else 
+		title = aVariable 
+	return title
+}
+
+//===============================================
+//$(".title").on('click', function() {
+$("body").on('click', ".title", function() {		// to get dynamically created divs
+	id = $(this).attr('id');
+	mapId = id.replace('title','');
+	$('#commandLine').val($('#'+id).attr('title'));
+	$('#commandLine').attr('mapId', mapId);
+	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 100,
+			      position: {my: "left+30 top+30", at: "left", of: this} });
+});
+
+//===============================================
+$('#commandLine').on('keypress', function(e) {
+    if(e.which === 13) {
+        commandLine = $(this).val().split(' ');
+        command = commandLine[0];
+        commandLine.shift();
+        variable = commandLine.join(' ');       
+	mapId = $(this).attr('mapId');
+        wmspyferret[mapId].setParams({ command: command, variable: variable.replace('+','%2B') });
+	title = getTitle(command, variable);
+        $('#title'+mapId).html(title);   
+        $('#title'+mapId).attr('title', command + ' ' + variable);
+	//$('#key'+mapId).children('img').attr('src', 'http://webportals.ipsl.jussieu.fr/gunicorn/?SERVICE=WMS&REQUEST=GetColorBar' +
+	$('#key'+mapId).children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+							'&FILE=' + file +
+							'&COMMAND=' + command +
+							'&VARIABLE=' + variable.replace('+','%2B'));
+    }
+});
+
+//===============================================
+$("#addMap").on('click', function() {
+	file = $('#file').val();
+	command = $('#command').val();
+	variable = $('#variable').val();
+	Id++;
+	divs = "<div class='mapContainer'>" + 
+   			"<div id='title" + Id + "' class='title'></div>" +
+			"<div id='map" + Id + "' class='map'></div>" + 
+   			"<div id='key" + Id + "' class='key'><img /></div>" +
+   		"</div>";
+	$('#mapSpace').append(divs)
+	//wmspyferret[Id] = L.tileLayer.wms('http://webportals.ipsl.jussieu.fr/gunicorn', {
+	wmspyferret[Id] = L.tileLayer.wms('http://localhost:8000', {
+		file: file,
+		command: command,
+		variable: variable,
+	    	crs: crs,
+		format: 'image/png',
+		transparent: true,
+	    	uppercase: true
+	});
+	frontiers[Id] = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
+		layers: 'GCA:GCA_frontiersCountryAndRegions',
+		format: 'image/png',
+    		crs: crs,
+		transparent: true
+	});
+	map[Id] = L.map('map'+Id, {
+		layers: [wmspyferret[Id], frontiers[Id]],
+	    	crs: crs,
+	    	center: [0,-40],
+	    	zoom: 1,
+	    	attributionControl: false
+	});
+	$('#map'+Id).resizable();
+	$('#map'+Id).width(width);
+	$('#map'+Id).height(height);
+	title = getTitle(wmspyferret[Id].wmsParams.command, wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
+	$('#title'+Id).html(title);
+	$('#title'+Id).attr('title', wmspyferret[Id].wmsParams.command + ' ' + wmspyferret[Id].wmsParams.variable.replace('%2B','+'));   
+	//$('#key'+Id).children('img').attr('src', 'http://webportals.ipsl.jussieu.fr/gunicorn/?SERVICE=WMS&REQUEST=GetColorBar' +
+	$('#key'+Id).children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+							'&FILE=' + wmspyferret[Id].wmsParams.file +
+							'&COMMAND=' + wmspyferret[Id].wmsParams.command +
+							'&VARIABLE=' + wmspyferret[Id].wmsParams.variable.replace('+','%2B'));
+	syncMaps();
+
+});
+
+//===============================================
+var cntrlIsPressed = false;
+$(document).keydown(function(event){
+    if(event.which=="17")
+        cntrlIsPressed = true;
+});
+$(document).keyup(function(){
+    cntrlIsPressed = false;
+});
+
+$("body").on('click', ".map", function(e) {		// to get dynamically created divs
+    if(cntrlIsPressed) {		// CTRL key pressed
+	mapId = $(this)[0].id;
+	selectedId = parseInt(mapId.replace('map',''));
+ 	$('#map'+selectedId).parent().remove();
+	delete map[selectedId];
+	delete wmspyferret[selectedId];
+	delete frontiers[selectedId];
+	console.log(Object.keys(map));
+    }
+});
+
+//===============================================
+$(document).on('resizestop', '.map', function() {
+	width = $(this).width();
+	height = $(this).height();
+	for (mapId = 1; mapId <= Id ; mapId++) {
+		$('#map'+mapId).width(width);
+		$('#map'+mapId).height(height);
+	}
+});
+
+</script>
+
+</body>
+</html>

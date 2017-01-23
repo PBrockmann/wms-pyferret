@@ -209,6 +209,7 @@ def template_WMS_client():
 	}
 	.ui-dialog { z-index: 1000 !important; }
 	.ui-dialog-title { font-size: 12px !important; }
+	.ui-icon-gripsmall-diagonal-se { z-index: 1000 !important; }
     </style>
 </head>
 
@@ -286,6 +287,7 @@ $('#title{{ loop.index }}').attr('title', wmspyferret[{{ loop.index }}].wmsParam
 $('#key{{ loop.index }}').children('img').attr('src', 'http://localhost:{{ port }}/?SERVICE=WMS&REQUEST=GetColorBar' +
 							'&COMMAND=' + wmspyferret[{{ loop.index }}].wmsParams.command +
 							'&VARIABLE=' + wmspyferret[{{ loop.index }}].wmsParams.variable.replace('+','%2B'));
+$('#map{{ loop.index }}').resizable();
 {% endfor %}
 
 //===============================================
@@ -314,6 +316,16 @@ $('#commandLine').on('keypress', function(e) {
 							'&COMMAND=' + command +
 							'&VARIABLE=' + variable.replace('+','%2B'));
     }
+});
+
+//===============================================
+$('.map').on('resize', function() {
+	width = $(this).width();
+	height = $(this).height();
+	{% for aDict in cmdArray -%}
+		$('#map{{ loop.index }}').width(width);
+		$('#map{{ loop.index }}').height(height);
+	{% endfor %}
 });
 
 //===============================================
@@ -361,7 +373,7 @@ usage = "%prog [--width=400] [--height=400] [--size=value] [--center=[0,0]] [--z
 	"\nFor this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon)." + \
 	"\nFor example: 'shade/lev=20/title=Simulation&nbspA varA; shade/lev=20/title=Simulation&nbspB varB'"
 
-version = "%prog 0.9.6"
+version = "%prog 0.9.7"
 
 #------------------------------------------------------
 parser = OptionParser(usage=usage, version=version)
