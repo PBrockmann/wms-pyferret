@@ -39,9 +39,9 @@ def handler_app(environ, start_response):
         	pyferret.run('go ' + envScript)                 # load the environment (dataset to open + variables definition)
 
 		try:
-        		MASK = fields['MASK']
+        		PATTERN = fields['PATTERN']
 		except:
-        		MASK = None
+        		PATTERN = None
 
                 tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
                 tmpname = os.path.basename(tmpname)
@@ -76,10 +76,10 @@ def handler_app(environ, start_response):
                 	pyferret.run('frame/format=PNG/transparent/xpixels=' + str(WIDTH) + '/file="' + tmpdir + '/' + tmpname + '"')
 
 	        	if os.path.isfile(tmpdir + '/' + tmpname):
-				if MASK:
+				if PATTERN:
 					img = Image.open(tmpdir + '/' + tmpname)
-	        	        	mask = Image.open(MASK)
-					img = Image.composite(img, mask, mask)
+	        	        	pattern = Image.open(PATTERN)
+					img = Image.composite(img, pattern, pattern)
 					img.save(tmpdir + '/' + tmpname)
 	
 		#---------------------------------------------------------
@@ -178,8 +178,8 @@ def template_WMS_client():
     <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' />
     <script src='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
 
-    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.2/leaflet.css' />
-    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.2/leaflet.js'></script>
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css' />
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js'></script>
 
     <script src='http://cdn.rawgit.com/turban/Leaflet.Sync/master/L.Map.Sync.js'></script>
 
