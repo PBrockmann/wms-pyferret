@@ -83,8 +83,10 @@ var frontiers = [];
 
 var variableDisplayed = 'temp';
 
+var wmsserver = 'http://localhost:8000';
+
 //===============================================
-wmspyferret[1] = L.tileLayer.wms('http://localhost:8000', {
+wmspyferret[1] = L.tileLayer.wms(wmsserver, {
 	command: 'shade/x=-180:180/y=-90:90/lev=20v/pal=mpl_PSU_inferno',
 	variable: variableDisplayed +'[k=@max]',
     	crs: crs,
@@ -108,7 +110,7 @@ map[1] = L.map('map1', {
 });
 
 //===============================================
-wmspyferret[2] = L.tileLayer.wms('http://localhost:8000', {
+wmspyferret[2] = L.tileLayer.wms(wmsserver, {
 	command: 'shade/x=-180:180/y=-90:90/lev=20v/pal=mpl_PSU_inferno',
 	variable: variableDisplayed + '[k=@min]',
     	crs: crs,
@@ -152,14 +154,14 @@ function getTitle(aCommand, aVariable) {
 title1 = getTitle(wmspyferret[1].wmsParams.command, wmspyferret[1].wmsParams.variable.replace('%2B','+'));
 $('#title1').html(title1);
 $('#title1').attr('title', wmspyferret[1].wmsParams.command + ' ' + wmspyferret[1].wmsParams.variable.replace('%2B','+'));   
-$('#key1').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+$('#key1').children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
 						'&COMMAND=' + wmspyferret[1].wmsParams.command +
 						'&VARIABLE=' + wmspyferret[1].wmsParams.variable.replace('+','%2B'));
 
 title2 = getTitle(wmspyferret[2].wmsParams.command, wmspyferret[2].wmsParams.variable.replace('%2B','+'));
 $('#title2').html(title2);
 $('#title2').attr('title', wmspyferret[2].wmsParams.command + ' ' + wmspyferret[2].wmsParams.variable.replace('%2B','+'));   
-$('#key2').children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+$('#key2').children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
 						'&COMMAND=' + wmspyferret[2].wmsParams.command +
 						'&VARIABLE=' + wmspyferret[2].wmsParams.variable.replace('+','%2B'));
 
@@ -185,7 +187,7 @@ $('#commandLine').on('keypress', function(e) {
 	title = getTitle(command, variable);
         $('#title'+mapId).html(title);   
         $('#title'+mapId).attr('title', command + ' ' + variable);
-	$('#key'+mapId).children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+	$('#key'+mapId).children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
 							'&COMMAND=' + command +
 							'&VARIABLE=' + variable.replace('+','%2B'));
     }
@@ -203,7 +205,7 @@ $('#variable').on('change', function() {
         	wmspyferret[mapId].setParams({ variable: variable.replace('+','%2B') });
         	$('#title'+mapId).html(title);   
         	$('#title'+mapId).attr('title', command + ' ' + variable);
-		$('#key'+mapId).children('img').attr('src', 'http://localhost:8000/?SERVICE=WMS&REQUEST=GetColorBar' +
+		$('#key'+mapId).children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
 								'&COMMAND=' + command +
 								'&VARIABLE=' + variable.replace('+','%2B'));
 	}
