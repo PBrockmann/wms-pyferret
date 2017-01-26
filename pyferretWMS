@@ -7,8 +7,9 @@
 # processname: pyferretWMS
 
 # ==================================
+# sudo cp pyferretWMS /etc/init.d/
 # sudo chkconfig --add pyferretWMS
-# service pyferretWMS {start|stop|status|restart}
+# sudo service pyferretWMS {start|stop|status|restart}
 
 # ==================================
 # Source function library.
