@@ -33,9 +33,12 @@ def handler_app(environ, start_response):
 		if fields['SERVICE'] != 'WMS':
 			raise
 
+        	#FILE = fields['FILE']
         	COMMAND = fields['COMMAND']
         	VARIABLE = fields['VARIABLE'].replace('%2B','+')
 
+        	#pyferret.run('use ' + FILE)
+        	#pyferret.run('show data')
         	pyferret.run('go ' + envScript)                 # load the environment (dataset to open + variables definition)
 
 		try:
