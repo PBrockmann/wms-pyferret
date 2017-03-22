@@ -33,13 +33,12 @@ def handler_app(environ, start_response):
 		if fields['SERVICE'] != 'WMS':
 			raise
 
-        	#FILE = fields['FILE']
+        	FILE = fields['FILE']
         	COMMAND = fields['COMMAND']
         	VARIABLE = fields['VARIABLE'].replace('%2B','+')
 
-        	#pyferret.run('use ' + FILE)
+        	pyferret.run('use ' + FILE)
         	#pyferret.run('show data')
-        	pyferret.run('go ' + envScript)                 # load the environment (dataset to open + variables definition)
 
 		try:
         		PATTERN = fields['PATTERN']
@@ -109,7 +108,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	shutil.rmtree(tmpdir)
+	#shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
@@ -118,53 +117,51 @@ class myArbiter(gunicorn.arbiter.Arbiter):
 class StandaloneApplication(gunicorn.app.base.BaseApplication):
 
     def __init__(self, app, options=None):
-
 	# Start pyferret	
-        pyferret.start(journal=False, unmapped=True, quiet=True, verify=False)
-
+	pyferret.start(journal=False, unmapped=True, quiet=True, verify=False)
+	
 	master_pid = os.getpid()
 	print('---------> gunicorn master pid: ', master_pid)
+	
+	instance_WMS_Client = Template(template_WMS_client())
+	instance_NW_Package = Template(template_nw_package())
+	
+	with open(tmpdir + '/index.html', 'wb') as f:
+		f.write(instance_WMS_Client.render(gunicornPID=master_pid, 
+						   mapWidth=mapWidth, mapHeight=mapHeight, 
+						   mapCenter=mapCenter, mapZoom=mapZoom, port=port))
+	with open(tmpdir + '/package.json', 'wb') as f:
+		f.write(instance_NW_Package.render())
 
-	if not serverOnly:		# nw will be launched 
-		listSynchroMapsToSet = list(itertools.permutations(range(1,nbMaps+1), 2))
+	# Copy icon
+	path = os.path.dirname(os.path.realpath(__file__))	
+	shutil.copy("icon.png", tmpdir)
 
-		instance_WMS_Client = Template(template_WMS_client())
-		instance_NW_Package = Template(template_nw_package())
-
-		with open(tmpdir + '/index.html', 'wb') as f:
-    			f.write(instance_WMS_Client.render(cmdArray=cmdArray, gunicornPID=master_pid, 
-							   listSynchroMapsToSet=listSynchroMapsToSet,
-							   mapWidth=mapWidth, mapHeight=mapHeight, 
-							   mapCenter=mapCenter, mapZoom=mapZoom, port=port))
-		with open(tmpdir + '/package.json', 'wb') as f:
-    			f.write(instance_NW_Package.render(nbMaps=nbMaps,
-							   mapWidth=mapWidth, mapHeight=mapHeight))
-
-		# Launch NW.js
-    		proc = subprocess.Popen(['nw', tmpdir])
-    		print('Client nw process: ', proc.pid)
-
-        self.options = options or {}
-        self.application = app
-
-        super(StandaloneApplication, self).__init__()
+	# Launch NW.js
+	proc = subprocess.Popen(['nw', tmpdir])
+	print('Client nw process: ', proc.pid)
+	
+	self.options = options or {}
+	self.application = app
+	
+	super(StandaloneApplication, self).__init__()
 
     def load_config(self):
-        config = dict([(key, value) for key, value in iteritems(self.options)
-                       if key in self.cfg.settings and value is not None])
-        for key, value in iteritems(config):
-            self.cfg.set(key.lower(), value)
+	config = dict([(key, value) for key, value in iteritems(self.options)
+	               if key in self.cfg.settings and value is not None])
+	for key, value in iteritems(config):
+	    self.cfg.set(key.lower(), value)
 
     def load(self):
-        return self.application
+	return self.application
 
 # if control before exiting is needed
     def run(self):
-        try:
-            myArbiter(self).run()
-        except RuntimeError as e:
-            print('\nError: %s\n' % e, file=sys.stderr)
-            sys.stderr.flush()
+	try:
+	    myArbiter(self).run()
+	except RuntimeError as e:
+	    print('\nError: %s\n' % e, file=sys.stderr)
+	    sys.stderr.flush()
 	    sys.exit(1)
 
 #==============================================================
@@ -178,21 +175,25 @@ def template_WMS_client():
     <title>Slippy maps with WMS from pyferret</title>
 
     <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
-    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' />
+
+    <link href='http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css' rel="stylesheet"/>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js'></script>
+
+    <link href='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' rel="stylesheet"/>
     <script src='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
 
-    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css' />
+    <link href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css' rel="stylesheet"/>
     <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js'></script>
 
     <script src='http://cdn.rawgit.com/turban/Leaflet.Sync/master/L.Map.Sync.js'></script>
-
+    
     <style type='text/css'>
         html, body { font-family: 'arial' }
         .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px;}
-        .title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width:  {{ mapWidth }}px; }
-        .map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
+        .title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width:  400px; }
+	.map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
         .key { text-align: center; margin: auto; }
-        .key img { width: {{ mapWidth }}px; height: auto; max-width: 400px; }
+        .key img { width: 400px; height: auto; max-width: 400px; }
 	.leaflet-bar a, .leaflet-bar a:hover {
     		height: 16px;
     		line-height: 16px;
@@ -210,66 +211,98 @@ def template_WMS_client():
                 width: 100%;
 		font-size: 12px;
 	}
+	#addMap {
+                left: 220px;
+		position: relative;
+		margin-top: 15px;
+	}
 	.ui-dialog { z-index: 1000 !important; }
 	.ui-dialog-title { font-size: 12px !important; }
 	.ui-icon-gripsmall-diagonal-se { z-index: 1000 !important; }
+	.forSelect {
+                width: 500px;
+                left: 30px;
+		position: relative;
+	}
+	.forSelect label {
+                left: -20px;
+		position: relative;
+		margin-top: 5px;
+	}
     </style>
 </head>
 
 <body>
 
 <div id="dialog">
+	<div id="fileOpen"></div>
 	<input id="commandLine" type="text" placeholder="New command">
 </div>
 
-{% for aDict in cmdArray -%}
-<div class='mapContainer'>
-   <div id='title{{ loop.index }}' class='title'></div>
-   <div id='map{{ loop.index }}' class='map'></div>
-   <div id='key{{ loop.index }}' class='key'><img /></div>
+<div class="forSelect">
+   <label for="file">File to open:</label>
+   <input type="text" class="form-control" id="file" list="list_file" 
+		value="levitus_climatology"> 
+   <datalist id="list_file">
+	<option selected="selected">levitus_climatology</option>
+	<option>monthly_navy_winds</option>
+   </datalist>
 </div>
-{% endfor -%}
+
+<div class="forSelect">
+   <label for="command">Command to run:</label>
+   <input type="text" class="form-control" id="command" list="list_command"
+		value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno"> 
+   <datalist id="list_command">
+	<option selected="selected">shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno</option>
+	<option>shade/x=-180:180/y=-90:90/lev=20/pal=default</option>
+   </datalist>
+</div>
+
+<div class="forSelect">
+   <label for="variable">Variable to display:</label>
+   <input type="text" class="form-control" id="variable" list="list_variable"
+		value="temp[k=@max]"> 
+   <datalist id="list_variable">
+	<option selected="selected">temp[k=@max]</option>
+	<option>salt[k=@max]</option>
+	<option>uwnd[l=1]</option>
+	<option>vwnd[l=@ave]</option>
+   </datalist>
+</div>
+
+<p>
+<button type="button" class="btn btn-default" id="addMap" title="CTRL+click to remove">Insert a map</button>
+</p>
+
+<div id="mapSpace"></div>
 
 <script type='text/javascript'>
 
 //===============================================
 var crs = L.CRS.EPSG4326;
 
-var map = [];
-var wmspyferret = [];
-var frontiers= [];
+var Id = 0;
+var map = {};			// associative array
+var wmspyferret = {};
+var frontiers = {};
+var width = 400;
+var height = 400;
 
-{% for aDict in cmdArray -%}
-//===============================================
-wmspyferret[{{ loop.index }}] = L.tileLayer.wms('http://localhost:{{ port }}', {
-	command: '{{ aDict.command }}',
-	variable: '{{ aDict.variable }}',
-    	crs: crs,
-	format: 'image/png',
-	transparent: true,
-    	uppercase: true
-});
-frontiers[{{ loop.index }}] = L.tileLayer.wms('http://www.globalcarbonatlas.org/geoserver/GCA/wms', {
-	layers: 'GCA:GCA_frontiersCountryAndRegions',
-	format: 'image/png',
-    	crs: crs,
-	transparent: true
-});
-
-map[{{ loop.index }}] = L.map('map{{ loop.index }}', {
-    layers: [wmspyferret[{{ loop.index }}], frontiers[{{ loop.index }}]],
-    crs: crs,
-    center: {{ mapCenter }},
-    zoom: {{ mapZoom }},
-    attributionControl: false
-});
-{% endfor %}
+var wmsserver = 'http://localhost:{{ port }}';
 
 //===============================================
-// Set up synchro between maps
-{% for synchro in listSynchroMapsToSet -%}
-map[{{ synchro[0] }}].sync(map[{{ synchro[1] }}]);
-{% endfor %}
+function syncMaps() {			// do all synchronizations (less efficient than a python itertools.permutations)
+	listIds = Object.keys(map);
+	//console.log(listIds);
+	for (i in listIds) {
+		for (j in listIds) {
+			if (i != j) {
+				map[listIds[i]].sync(map[listIds[j]]);
+			}
+		}
+	}
+}
 
 //===============================================
 function getTitle(aCommand, aVariable) {
@@ -283,29 +316,21 @@ function getTitle(aCommand, aVariable) {
 }
 
 //===============================================
-{% for aDict in cmdArray -%}
-title{{ loop.index }} = getTitle(wmspyferret[{{ loop.index }}].wmsParams.command, wmspyferret[{{ loop.index }}].wmsParams.variable.replace('%2B','+'));
-$('#title{{ loop.index }}').html(title{{ loop.index }});   
-$('#title{{ loop.index }}').attr('title', wmspyferret[{{ loop.index }}].wmsParams.command + ' ' + wmspyferret[{{ loop.index }}].wmsParams.variable.replace('%2B','+'));   
-$('#key{{ loop.index }}').children('img').attr('src', 'http://localhost:{{ port }}/?SERVICE=WMS&REQUEST=GetColorBar' +
-							'&COMMAND=' + wmspyferret[{{ loop.index }}].wmsParams.command +
-							'&VARIABLE=' + wmspyferret[{{ loop.index }}].wmsParams.variable.replace('+','%2B'));
-$('#map{{ loop.index }}').resizable();
-{% endfor %}
-
-//===============================================
-$(".title").on('click', function() {
+$("body").on('click', ".title", function() {		// to get dynamically created divs
 	id = $(this).attr('id');
 	mapId = id.replace('title','');
+        file = wmspyferret[mapId].wmsParams.file;
+	$('#fileOpen').text(file);
 	$('#commandLine').val($('#'+id).attr('title'));
 	$('#commandLine').attr('mapId', mapId);
 	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 100,
-			      position: {my: "left", at: "left+10", of: window} });
+			      position: {my: "left+30 top+30", at: "left", of: this} });
 });
 
 //===============================================
-$('#commandLine').on('keypress', function(e) {
-    if(e.which === 13) {
+$('#commandLine').on('keypress', function(event) {
+    if(event.which === 13) {				// Enter key pressed
+        file = wmspyferret[mapId].wmsParams.file;
         commandLine = $(this).val().split(' ');
         command = commandLine[0];
         commandLine.shift();
@@ -315,26 +340,93 @@ $('#commandLine').on('keypress', function(e) {
 	title = getTitle(command, variable);
         $('#title'+mapId).html(title);   
         $('#title'+mapId).attr('title', command + ' ' + variable);
-	$('#key'+mapId).children('img').attr('src', 'http://localhost:{{ port }}/?SERVICE=WMS&REQUEST=GetColorBar' +
+	$('#key'+mapId).children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
+							'&FILE=' + file +
 							'&COMMAND=' + command +
 							'&VARIABLE=' + variable.replace('+','%2B'));
     }
 });
 
 //===============================================
-$('.map').on('resize', function() {
+$("#addMap").on('click', function() {
+	file = $('#file').val();
+	command = $('#command').val();
+	variable = $('#variable').val();
+	Id++;
+	divs = "<div class='mapContainer'>" + 
+   			"<div id='title" + Id + "' class='title'></div>" +
+			"<div id='map" + Id + "' class='map'></div>" + 
+   			"<div id='key" + Id + "' class='key'><img /></div>" +
+   		"</div>";
+	$('#mapSpace').append(divs)
+	wmspyferret[Id] = L.tileLayer.wms(wmsserver, {
+		file: file,
+		command: command,
+		variable: variable,
+	    	crs: crs,
+		format: 'image/png',
+		transparent: true,
+	    	uppercase: true
+	});
+	frontiers[Id] = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
+		layers: 'GCA:GCA_frontiersCountryAndRegions',
+		format: 'image/png',
+    		crs: crs,
+		transparent: true
+	});
+	map[Id] = L.map('map'+Id, {
+		layers: [wmspyferret[Id], frontiers[Id]],
+	    	crs: crs,
+		center: {{ mapCenter }},
+		zoom: {{ mapZoom }},
+	    	attributionControl: false
+	});
+	$('#map'+Id).resizable();
+	$('#map'+Id).width(width);
+	$('#map'+Id).height(height);
+	title = getTitle(wmspyferret[Id].wmsParams.command, wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
+	$('#title'+Id).html(title);
+	$('#title'+Id).attr('title', wmspyferret[Id].wmsParams.command + ' ' + wmspyferret[Id].wmsParams.variable.replace('%2B','+'));   
+	$('#key'+Id).children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
+							'&FILE=' + wmspyferret[Id].wmsParams.file +
+							'&COMMAND=' + wmspyferret[Id].wmsParams.command +
+							'&VARIABLE=' + wmspyferret[Id].wmsParams.variable.replace('+','%2B'));
+	syncMaps();
+
+});
+
+//===============================================
+$("body").on('click', ".map", function(event) {		// to get dynamically created divs
+    if(event.ctrlKey) {
+	mapId = $(this)[0].id;
+	selectedId = parseInt(mapId.replace('map',''));
+ 	$('#map'+selectedId).parent().remove();
+	delete map[selectedId];
+	delete wmspyferret[selectedId];
+	delete frontiers[selectedId];
+	console.log(Object.keys(map));
+    }
+});
+
+//===============================================
+$(document).on('resizestop', '.map', function() {
 	width = $(this).width();
 	height = $(this).height();
-	{% for aDict in cmdArray -%}
-		$('#map{{ loop.index }}').width(width);
-		$('#map{{ loop.index }}').height(height);
-	{% endfor %}
+	for (mapId = 1; mapId <= Id ; mapId++) {
+		$('#map'+mapId).width(width);
+		$('#map'+mapId).height(height);
+	}
 });
 
 //===============================================
 var exec = require('child_process').exec,child;
 
 process.stdout.write('Starting NW application\\n');
+
+//var zoomPercent = 75;
+//var win = require("nw.gui").Window.get();
+//win.zoomLevel = Math.log(zoomPercent/100) / Math.log(1.2);
+
 process.on('exit', function (){
     process.stdout.write('Exiting from NW application, now killing the gunicorn server\\n');
     process.kill({{ gunicornPID }});			// kill gunicorn server
@@ -355,113 +447,75 @@ def template_nw_package():
   "main": "index.html",
   "window": {
           "toolbar": false,
-          "width": {{ nbMaps*mapWidth + nbMaps*10 + 60 }},
-          "height": {{ mapHeight + 100 }} 
-          }
+          "width": 1250,
+          "height": 800,
+	  "icon": "icon.png"
+          },
+  "chromium-args": "--force-device-scale-factor" 
 }
 '''
+
+# https://github.com/danielfarrell/bootstrap-combobox
+# http://www.jqwidgets.com/community/topic/add-delete-edit-autocomplete-the-combobox-item
+# https://github.com/indrimuska/jquery-editable-select
 
 #==============================================================
 from optparse import OptionParser
 
 #------------------------------------------------------
-usage = "%prog [--width=400] [--height=400] [--size=value] [--center=[0,0]] [--zoom=1]" + \
-	"\n                      [--env=pyferretWMS.jnl] [--server] [--port=8000]" + \
-	"\n                      'cmd/qualifiers variable; cmd/qualifiers variable'" + \
-	"\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to" + \
-	"\nseparate the variable from the command and its qualifiers). The semi-colon character ';'" +\
-	"\nis the separator between commands and will determine the number of maps to be drawn." + \
-	"\nThe qualifiers can include the title qualifier considering that the space character" + \
-	"\nis not allowed since used to distinguish the cmd/qualifiers and the variable(s)." + \
-	"\nFor this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon)." + \
-	"\nFor example: 'shade/lev=20/title=Simulation&nbspA varA; shade/lev=20/title=Simulation&nbspB varB'"
+usage = "%prog [--port=8000]"
 
-version = "%prog 0.9.7"
+version = "%prog 0.5.0"
 
 #------------------------------------------------------
 parser = OptionParser(usage=usage, version=version)
 
 parser.add_option("--width", type="int", dest="width", default=400,
-		help="200 < map width <= 600")
+                help="200 < map width <= 600")
 parser.add_option("--height", type="int", dest="height", default=400,
-		help="200 < map height <= 600")
+                help="200 < map height <= 600")
 parser.add_option("--size", type="int", dest="size",
-		help="200 < map height and width <= 600")
-parser.add_option("--env", dest="envScript", default="pyferretWMS.jnl",
-		help="ferret script to set the environment (default=pyferretWMS.jnl). It contains datasets to open, variables definition.")
+                help="200 < map height and width <= 600")
 parser.add_option("--center", type="string", dest="center", default='[0,-40]',
-		help="Initial center of maps as [lat, lon] (default=[0,-40])")
+                help="Initial center of maps as [lat, lon] (default=[0,-40])")
 parser.add_option("--zoom", type="int", dest="zoom", default=1,
-		help="Initial zoom of maps (default=1)")
-parser.add_option("--server", dest="serverOnly", action="store_true", default=False,
-		help="Server only (default=False)")
+                help="Initial zoom of maps (default=1)")
 parser.add_option("--port", type="int", dest="port", default=8000,
 		help="Server port number (default=8000)")
 
 (options, args) = parser.parse_args()
 
 if options.size:
-	mapHeight = options.size
-	mapWidth = options.size
+        mapHeight = options.size
+        mapWidth = options.size
 else:
-	mapHeight = options.height
-	mapWidth = options.width
+        mapHeight = options.height
+        mapWidth = options.width
 
 mapCenter = options.center
 mapZoom = options.zoom
-envScript = options.envScript
-serverOnly = options.serverOnly
 port = options.port
 
 #------------------------------------------------------
+# Check pyferret, gunicorn....
+
+
+#------------------------------------------------------
 # Global variables
-nbMaps = 0
-cmdArray = []
 tmpdir = tempfile.mkdtemp()
 
 print('Temporary directory to remove: ', tmpdir)
 
 #------------------------------------------------------
-if serverOnly:
-	if len(args) != 0:
-        	parser.error("No argument needed in mode server")
-		parser.print_help()
+if len(args) != 0:
+        parser.error("No argument needed")
+	parser.print_help()
+        sys.exit(1)
 
-else:
-	if len(args) != 1:
-        	parser.error("Wrong number of arguments")
-		parser.print_help()
-
-	if (mapWidth < 200 or mapWidth > 600) or (mapHeight < 200 or mapHeight > 600):
-		parser.error("Map size options incorrect (200 <= size,width,height <= 600)")
-		parser.print_help()
-		sys.exit(1)
-	
-	if not os.path.isfile(envScript):
-		parser.error("Environment script option missing")
-		parser.print_help()
-		sys.exit(1)
-	
-	cmdsRequested = args[0]
-	
-	cmds = cmdsRequested.split(';')		# get individual commands
-	cmds = map(str.strip, cmds)  		# remove surrounding spaces if present
-	
-	nbMaps = len(cmds)
-	print(str(nbMaps) + ' maps to draw')
-	
-	if nbMaps > 4:
-		print("\n=======> Error: Maximum number of maps: 4\n")
-		parser.print_help()
-		sys.exit(1)
-	
-	# create array of dict {'command', 'variable'}
-	for i,cmd in enumerate(cmds, start=1):
-		# Get command
-		command = cmd.split(' ')[0]			
-		# Get variable
-		variable = ' '.join(cmd.split(' ')[1:])
-		cmdArray.append({'command': command, 'variable': variable})
+if (mapWidth < 200 or mapWidth > 600) or (mapHeight < 200 or mapHeight > 600):
+	parser.error("Map size options incorrect (200 <= size,width,height <= 600)")
+        parser.print_help()
+        sys.exit(1)
 
 #------------------------------------------------------
 options = {
