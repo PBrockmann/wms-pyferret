@@ -320,7 +320,7 @@ $("body").on('click', ".title", function() {		// to get dynamically created divs
 	id = $(this).attr('id');
 	mapId = id.replace('title','');
         file = wmspyferret[mapId].wmsParams.file;
-	$('#fileOpen').text(file);
+$('#fileOpen').text(file);
 	$('#commandLine').val($('#'+id).attr('title'));
 	$('#commandLine').attr('mapId', mapId);
 	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 100,
@@ -352,6 +352,9 @@ $("#addMap").on('click', function() {
 	file = $('#file').val();
 	command = $('#command').val();
 	variable = $('#variable').val();
+	$('#list_file').append('<option>' + file + '</option>');
+	$('#list_command').append('<option>' + command + '</option>');
+	$('#list_variable').append('<option>' + variable + '</option>');
 	Id++;
 	divs = "<div class='mapContainer'>" + 
    			"<div id='title" + Id + "' class='title'></div>" +
@@ -458,6 +461,7 @@ def template_nw_package():
 # https://github.com/danielfarrell/bootstrap-combobox
 # http://www.jqwidgets.com/community/topic/add-delete-edit-autocomplete-the-combobox-item
 # https://github.com/indrimuska/jquery-editable-select
+# http://stackoverflow.com/questions/32087363/getting-the-full-list-from-a-html-datalist-clicking-on-the-arrow 
 
 #==============================================================
 from optparse import OptionParser
