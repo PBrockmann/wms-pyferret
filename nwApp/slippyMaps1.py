@@ -108,7 +108,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	shutil.rmtree(tmpdir)
+	#shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
@@ -208,6 +208,12 @@ def template_WMS_client():
 	.leaflet-control-zoom-in, .leaflet-control-zoom-out {
     		font-size: 14px;
 		text-indent: 0px;
+	}
+	.close {
+		opacity: 0.0;
+	}
+	.mapContainer:hover > .close {
+		opacity: 1.0;
 	}
 	#dialog {
 		display: none;
@@ -368,6 +374,7 @@ $("#addMap").on('click', function() {
 	Id++;
 	divs = "<div class='mapContainer'>" + 
    			"<div id='title" + Id + "' class='title'></div>" +
+   			"<div id='close" + Id + "' class='close ui-icon ui-icon-closethick'></div>" +
 			"<div id='map" + Id + "' class='map'></div>" + 
    			"<div id='key" + Id + "' class='key'><img /></div>" +
    		"</div>";
@@ -409,7 +416,7 @@ $("#addMap").on('click', function() {
 });
 
 //===============================================
-$("body").on('click', ".map", function(event) {		// to get dynamically created divs
+$("body").on('click', ".map", function(event) {
     if(event.ctrlKey) {
 	mapId = $(this)[0].id;
 	selectedId = parseInt(mapId.replace('map',''));
@@ -419,6 +426,16 @@ $("body").on('click', ".map", function(event) {		// to get dynamically created d
 	delete frontiers[selectedId];
 	console.log(Object.keys(map));
     }
+});
+
+//===============================================
+$("body").on('click', ".close", function(event) {
+    closeId = $(this)[0].id;
+    selectedId = parseInt(closeId.replace('close',''));
+    $('#map'+selectedId).parent().remove();
+    delete map[selectedId];
+    delete wmspyferret[selectedId];
+    delete frontiers[selectedId];
 });
 
 //===============================================
@@ -467,9 +484,6 @@ def template_nw_package():
   "chromium-args": "--force-device-scale-factor" 
 }
 '''
-
-# https://github.com/danielfarrell/bootstrap-combobox
-# http://www.jqwidgets.com/community/topic/add-delete-edit-autocomplete-the-combobox-item
 
 #==============================================================
 from optparse import OptionParser

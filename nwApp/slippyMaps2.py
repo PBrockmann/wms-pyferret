@@ -241,7 +241,7 @@ def template_WMS_client():
 
 <div class="forSelect">
    <label for="file">File to open:</label>
-   <input type="text" class="form-control" id="file" list="list_file" 
+   <input type="text" class="form-control" id="file" list="list_file" type="search"
 		value="levitus_climatology"> 
    <datalist id="list_file">
 	<option selected="selected">levitus_climatology</option>
@@ -251,7 +251,7 @@ def template_WMS_client():
 
 <div class="forSelect">
    <label for="command">Command to run:</label>
-   <input type="text" class="form-control" id="command" list="list_command"
+   <input type="text" class="form-control" id="command" list="list_command" type="search"
 		value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno"> 
    <datalist id="list_command">
 	<option selected="selected">shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno</option>
@@ -261,7 +261,7 @@ def template_WMS_client():
 
 <div class="forSelect">
    <label for="variable">Variable to display:</label>
-   <input type="text" class="form-control" id="variable" list="list_variable"
+   <input type="text" class="form-control" id="variable" list="list_variable" type="search"
 		value="temp[k=@max]"> 
    <datalist id="list_variable">
 	<option selected="selected">temp[k=@max]</option>
