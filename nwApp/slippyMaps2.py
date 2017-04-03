@@ -190,7 +190,7 @@ def template_WMS_client():
     <style type='text/css'>
         html, body { font-family: 'arial' }
         .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px;}
-        .title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; }
+        .title { font-size: 12px; float: left; }
 	.map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
         .key { text-align: center; margin: auto; }
         .key img { max-width: 100%; max-height: 100%; }
@@ -225,6 +225,7 @@ def template_WMS_client():
 	.ui-dialog { z-index: 1000 !important; }
 	.ui-dialog-title { font-size: 12px !important; }
 	.ui-icon-gripsmall-diagonal-se { z-index: 1000 !important; }
+   	.ui-icon-closethick { margin-top: 0; }
 	.forSelect {
                 width: 500px;
                 left: 30px;
