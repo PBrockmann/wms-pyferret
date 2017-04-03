@@ -190,10 +190,10 @@ def template_WMS_client():
     <style type='text/css'>
         html, body { font-family: 'arial' }
         .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px;}
-        .title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width:  400px; }
+        .title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; }
 	.map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
         .key { text-align: center; margin: auto; }
-        .key img { width: 400px; height: auto; max-width: 400px; }
+        .key img { max-width: 100%; max-height: 100%; }
 	.leaflet-bar a, .leaflet-bar a:hover {
     		height: 16px;
     		line-height: 16px;
@@ -202,6 +202,12 @@ def template_WMS_client():
 	.leaflet-control-zoom-in, .leaflet-control-zoom-out {
     		font-size: 14px;
 		text-indent: 0px;
+	}
+	.close {
+		opacity: 0.0;
+	}
+	.mapContainer:hover > .header > .close {
+		opacity: 1.0;
 	}
 	#dialog {
 		display: none;
@@ -286,8 +292,8 @@ var Id = 0;
 var map = {};			// associative array
 var wmspyferret = {};
 var frontiers = {};
-var width = 400;
-var height = 400;
+var width = {{ mapWidth }};
+var height = {{ mapHeight }};
 
 var wmsserver = 'http://localhost:{{ port }}';
 
@@ -320,7 +326,7 @@ $("body").on('click', ".title", function() {		// to get dynamically created divs
 	id = $(this).attr('id');
 	mapId = id.replace('title','');
         file = wmspyferret[mapId].wmsParams.file;
-$('#fileOpen').text(file);
+	$('#fileOpen').text(file);
 	$('#commandLine').val($('#'+id).attr('title'));
 	$('#commandLine').attr('mapId', mapId);
 	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 100,
@@ -357,7 +363,10 @@ $("#addMap").on('click', function() {
 	$('#list_variable').append('<option>' + variable + '</option>');
 	Id++;
 	divs = "<div class='mapContainer'>" + 
-   			"<div id='title" + Id + "' class='title'></div>" +
+   			"<div id='mapHeader" + Id + "' class='header'>" +
+   			    "<div id='title" + Id + "' class='title'></div>" +
+   			    "<div id='close" + Id + "' class='close ui-icon ui-icon-closethick'></div>" +
+   			"</div>" +
 			"<div id='map" + Id + "' class='map'></div>" + 
    			"<div id='key" + Id + "' class='key'><img /></div>" +
    		"</div>";
@@ -394,12 +403,13 @@ $("#addMap").on('click', function() {
 							'&FILE=' + wmspyferret[Id].wmsParams.file +
 							'&COMMAND=' + wmspyferret[Id].wmsParams.command +
 							'&VARIABLE=' + wmspyferret[Id].wmsParams.variable.replace('+','%2B'));
+	$('#key'+Id).width(width);
 	syncMaps();
 
 });
 
 //===============================================
-$("body").on('click', ".map", function(event) {		// to get dynamically created divs
+$("body").on('click', ".map", function(event) {
     if(event.ctrlKey) {
 	mapId = $(this)[0].id;
 	selectedId = parseInt(mapId.replace('map',''));
@@ -412,12 +422,24 @@ $("body").on('click', ".map", function(event) {		// to get dynamically created d
 });
 
 //===============================================
+$("body").on('click', ".close", function(event) {
+    closeId = $(this)[0].id;
+    selectedId = parseInt(closeId.replace('close',''));
+    $('#map'+selectedId).parent().remove();
+    delete map[selectedId];
+    delete wmspyferret[selectedId];
+    delete frontiers[selectedId];
+});
+
+//===============================================
 $(document).on('resizestop', '.map', function() {
 	width = $(this).width();
 	height = $(this).height();
 	for (mapId = 1; mapId <= Id ; mapId++) {
 		$('#map'+mapId).width(width);
 		$('#map'+mapId).height(height);
+		$('#header'+mapId).width(width);
+		$('#key'+mapId).width(width);
 	}
 });
 
@@ -449,7 +471,7 @@ def template_nw_package():
   "name": "Slippy maps with WMS from pyferret",
   "main": "index.html",
   "window": {
-          "toolbar": false,
+          "toolbar": true,
           "width": 1250,
           "height": 800,
 	  "icon": "icon.png"
@@ -457,11 +479,6 @@ def template_nw_package():
   "chromium-args": "--force-device-scale-factor" 
 }
 '''
-
-# https://github.com/danielfarrell/bootstrap-combobox
-# http://www.jqwidgets.com/community/topic/add-delete-edit-autocomplete-the-combobox-item
-# https://github.com/indrimuska/jquery-editable-select
-# http://stackoverflow.com/questions/32087363/getting-the-full-list-from-a-html-datalist-clicking-on-the-arrow 
 
 #==============================================================
 from optparse import OptionParser
