@@ -108,7 +108,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	#shutil.rmtree(tmpdir)
+	shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
@@ -179,6 +179,8 @@ def template_WMS_client():
     <link href='http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css' rel="stylesheet"/>
     <script src='http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js'></script>
 
+    <script src='http://rawgit.com/gesquive/bootstrap-add-clear/master/bootstrap-add-clear.min.js'></script>
+
     <link href='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' rel="stylesheet"/>
     <script src='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
 
@@ -207,7 +209,7 @@ def template_WMS_client():
 		opacity: 0.0;
 	}
 	.mapContainer:hover > .header > .close {
-		opacity: 1.0;
+		opacity: 0.5;
 	}
 	#dialog {
 		display: none;
@@ -249,6 +251,7 @@ def template_WMS_client():
 <div class="forSelect">
    <label for="file">File to open:</label>
    <input type="text" class="form-control" id="file" list="list_file" type="search"
+		placeholder="Indicate a dataset"
 		value="levitus_climatology"> 
    <datalist id="list_file">
 	<option selected="selected">levitus_climatology</option>
@@ -259,6 +262,7 @@ def template_WMS_client():
 <div class="forSelect">
    <label for="command">Command to run:</label>
    <input type="text" class="form-control" id="command" list="list_command" type="search"
+		placeholder="Indicate a command"
 		value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno"> 
    <datalist id="list_command">
 	<option selected="selected">shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno</option>
@@ -269,6 +273,7 @@ def template_WMS_client():
 <div class="forSelect">
    <label for="variable">Variable to display:</label>
    <input type="text" class="form-control" id="variable" list="list_variable" type="search"
+		placeholder="Indicate a variable"
 		value="temp[k=@max]"> 
    <datalist id="list_variable">
 	<option selected="selected">temp[k=@max]</option>
@@ -297,6 +302,20 @@ var width = {{ mapWidth }};
 var height = {{ mapHeight }};
 
 var wmsserver = 'http://localhost:{{ port }}';
+
+//===============================================
+$("input:text").addClear({                      // https://github.com/gesquive/bootstrap-add-clear
+        showOnLoad: true,
+        onClear: function() {
+                $("#addMap").prop('disabled', true);
+        }
+});
+
+$("input:text").on('input', function() {
+        if ($(this).val().length != 0) {
+                $("#addMap").prop('disabled', false);
+        }
+});
 
 //===============================================
 function syncMaps() {			// do all synchronizations (less efficient than a python itertools.permutations)
