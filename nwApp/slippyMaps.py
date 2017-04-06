@@ -14,6 +14,7 @@ import tempfile
 import pyferret
 from paste.request import parse_formvars
 import subprocess
+import json
 
 from jinja2 import Template
 import itertools
@@ -34,22 +35,35 @@ def handler_app(environ, start_response):
 			raise
 
         	FILE = fields['FILE']
-        	COMMAND = fields['COMMAND']
-        	VARIABLE = fields['VARIABLE'].replace('%2B','+')
-
-        	pyferret.run('use ' + FILE)
-        	#pyferret.run('show data')
-
+		try:
+        		COMMAND = fields['COMMAND']
+		except:
+        		COMMAND = None
+		try:
+        		VARIABLE = fields['VARIABLE'].replace('%2B','+')
+		except:
+        		VARIABLE = None
 		try:
         		PATTERN = fields['PATTERN']
 		except:
         		PATTERN = None
 
+        	pyferret.run('use ' + FILE)
+
                 tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
                 tmpname = os.path.basename(tmpname)
 
 		#---------------------------------------------------------
-		if fields['REQUEST'] == 'GetColorBar':
+		if fields['REQUEST'] == 'GetVariables':
+			varnamesdict = pyferret.getstrdata('..varnames')
+			variables = varnamesdict['data'].flatten().tolist()
+
+			#print(json.dumps(variables))
+			start_response('200 OK', [('content-type', 'application/json')])
+			return iter(json.dumps(variables))
+
+		#---------------------------------------------------------
+		elif fields['REQUEST'] == 'GetColorBar':
                 	pyferret.run('set window/aspect=1/outline=0')
                 	pyferret.run('go margins 2 4 3 3')
                 	pyferret.run(COMMAND + '/set_up ' + VARIABLE)
@@ -94,7 +108,7 @@ def handler_app(environ, start_response):
 			ftmp.close()
 			os.remove(tmpdir + '/' + tmpname)
 
-		start_response('200 OK', [('content-type', 'image/png')])
+		start_response('200 OK', [('content-type', 'image/png')])		# for GetColorBar and GetMap
 		return iter(img) 
 
         except:
@@ -108,7 +122,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	shutil.rmtree(tmpdir)
+	#shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
@@ -135,7 +149,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 
 	# Copy icon
 	path = os.path.dirname(os.path.realpath(__file__))	
-	shutil.copy("icon.png", tmpdir)
+	shutil.copy(path + "/icon.png", tmpdir)
 
 	# Launch NW.js
 	proc = subprocess.Popen(['nw', tmpdir])
@@ -251,35 +265,36 @@ def template_WMS_client():
 <div class="forSelect">
    <label for="file">File to open:</label>
    <input type="text" class="form-control" id="file" list="list_file" type="search"
-		placeholder="Indicate a dataset"
+		placeholder="Enter a dataset"
 		value="levitus_climatology"> 
    <datalist id="list_file">
-	<option selected="selected">levitus_climatology</option>
-	<option>monthly_navy_winds</option>
+	<option value="levitus_climatology" selected="selected">
+	<option value="monthly_navy_winds">
    </datalist>
 </div>
 
 <div class="forSelect">
    <label for="command">Command to run:</label>
    <input type="text" class="form-control" id="command" list="list_command" type="search"
-		placeholder="Indicate a command"
+		placeholder="Enter a command"
 		value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno"> 
    <datalist id="list_command">
-	<option selected="selected">shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno</option>
-	<option>shade/x=-180:180/y=-90:90/lev=20/pal=default</option>
+	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno" selected="selected">
+	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_plasma">
+	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_viridis">
+	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_magma">
+	<option value="shade/x=-180:180/y=-90:90/lev=20/pal=default">
    </datalist>
 </div>
 
 <div class="forSelect">
    <label for="variable">Variable to display:</label>
    <input type="text" class="form-control" id="variable" list="list_variable" type="search"
-		placeholder="Indicate a variable"
-		value="temp[k=@max]"> 
+		placeholder="Enter a variable"
+		value="TEMP[k=1,l=1]"> 
    <datalist id="list_variable">
-	<option selected="selected">temp[k=@max]</option>
-	<option>salt[k=@max]</option>
-	<option>uwnd[l=1]</option>
-	<option>vwnd[l=@ave]</option>
+	<option value="TEMP[k=1,l=1]" selected="selected">
+	<option value="SALT[k=1,l=1]">
    </datalist>
 </div>
 
@@ -315,6 +330,22 @@ $("input:text").on('input', function() {
         if ($(this).val().length != 0) {
                 $("#addMap").prop('disabled', false);
         }
+});
+
+$("#file").on('input', function() {
+	$.ajax({
+  		dataType: "json",
+  		url: wmsserver,
+		data: 'SERVICE=WMS' + '&REQUEST=GetVariables' + '&FILE=' + $(this).val(),
+		success: function(data) { 
+			for (i in data) {
+				dataEntry =  data[i] + '[k=1,l=1]';
+				optionExists = ($('#list_variable option[value="' + dataEntry + '"]').length > 0);
+				if (!optionExists) { $('#list_variable').append('<option value="' + dataEntry + '">'); }
+				if (i==0) { $("#variable").val(dataEntry); }				// preselect the 1st variable
+			}
+		}
+	});
 });
 
 //===============================================
@@ -375,12 +406,19 @@ $('#commandLine').on('keypress', function(event) {
 
 //===============================================
 $("#addMap").on('click', function() {
+
 	file = $('#file').val();
+	optionExists = ($('#list_file option[value="' + file + '"]').length > 0);			// Append only if not existing
+	if (!optionExists) { $('#list_file').append('<option value="' + file + '">'); }
+
 	command = $('#command').val();
+	optionExists = ($('#list_command option[value="' + command + '"]').length > 0);
+	if (!optionExists) { $('#list_command').append('<option value="' + command + '">'); }
+
 	variable = $('#variable').val();
-	$('#list_file').append('<option>' + file + '</option>');
-	$('#list_command').append('<option>' + command + '</option>');
-	$('#list_variable').append('<option>' + variable + '</option>');
+	optionExists = ($('#list_variable option[value="' + command + '"]').length > 0);
+	if (!optionExists) { $('#list_variable').append('<option value="' + variable + '">'); }
+
 	Id++;
 	divs = "<div class='mapContainer'>" + 
    			"<div id='mapHeader" + Id + "' class='header'>" +
@@ -437,7 +475,7 @@ $("body").on('click', ".map", function(event) {
 	delete map[selectedId];
 	delete wmspyferret[selectedId];
 	delete frontiers[selectedId];
-	console.log(Object.keys(map));
+	//console.log(Object.keys(map));
     }
 });
 
