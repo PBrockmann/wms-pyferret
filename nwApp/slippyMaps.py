@@ -283,6 +283,8 @@ def template_WMS_client():
 	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_plasma">
 	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_viridis">
 	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_magma">
+	<option value="shade/x=-180:180/y=-90:90/lev=20/pal=mpl_Div_PRGn">
+	<option value="shade/x=-180:180/y=-90:90/lev=20/pal=mpl_Div_RdBu">
 	<option value="shade/x=-180:180/y=-90:90/lev=20/pal=default">
    </datalist>
 </div>
@@ -416,7 +418,7 @@ $("#addMap").on('click', function() {
 	if (!optionExists) { $('#list_command').append('<option value="' + command + '">'); }
 
 	variable = $('#variable').val();
-	optionExists = ($('#list_variable option[value="' + command + '"]').length > 0);
+	optionExists = ($('#list_variable option[value="' + variable + '"]').length > 0);
 	if (!optionExists) { $('#list_variable').append('<option value="' + variable + '">'); }
 
 	Id++;
