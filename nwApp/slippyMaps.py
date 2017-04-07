@@ -122,7 +122,7 @@ class myArbiter(gunicorn.arbiter.Arbiter):
         pyferret.stop()
 
 	print('Removing temporary directory: ', tmpdir)
-	#shutil.rmtree(tmpdir)
+	shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
@@ -209,7 +209,7 @@ def template_WMS_client():
         .title { font-size: 12px; float: left; }
 	.map { width: {{ mapWidth }}px; height: {{ mapHeight }}px; }
         .key { text-align: center; margin: auto; }
-        .key img { max-width: 100%; max-height: 100%; }
+        .key img { max-width: 400px; max-height: 50px; }		/* colorbar is 400x50 */
 	.leaflet-bar a, .leaflet-bar a:hover {
     		height: 16px;
     		line-height: 16px;
@@ -459,7 +459,8 @@ $("#addMap").on('click', function() {
 	title = getTitle(wmspyferret[Id].wmsParams.command, wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
 	$('#title'+Id).html(title);
 	$('#title'+Id).attr('title', wmspyferret[Id].wmsParams.command + ' ' + wmspyferret[Id].wmsParams.variable.replace('%2B','+'));   
-	$('#key'+Id).width(width);
+	$('#key'+Id).children('img').css('width', width + 'px');
+	$('#key'+Id).children('img').css('height', parseInt(width/8) + 'px');			// according to ratio 400/50 = 8
 	$('#key'+Id).children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
 							'&FILE=' + wmspyferret[Id].wmsParams.file +
 							'&COMMAND=' + wmspyferret[Id].wmsParams.command +
@@ -486,7 +487,8 @@ $(document).on('resizestop', '.map', function() {
 		$('#map'+mapId).width(width);
 		$('#map'+mapId).height(height);
 		$('#header'+mapId).width(width);
-		$('#key'+mapId).width(width);
+		$('#key'+mapId).children('img').css('width', width + 'px');
+		$('#key'+mapId).children('img').css('height', parseInt(width/8) + 'px');		// according to ratio 400/50 = 8
 	}
 });
 
