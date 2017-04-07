@@ -301,7 +301,7 @@ def template_WMS_client():
 </div>
 
 <p>
-<button type="button" class="btn btn-default" id="addMap" title="CTRL+click to remove">Insert a map</button>
+<button type="button" class="btn btn-default" id="addMap">Insert a map</button>
 </p>
 
 <div id="mapSpace"></div>
@@ -430,7 +430,7 @@ $("#addMap").on('click', function() {
 			"<div id='map" + Id + "' class='map'></div>" + 
    			"<div id='key" + Id + "' class='key'><img /></div>" +
    		"</div>";
-	$('#mapSpace').append(divs)
+	$('#mapSpace').append(divs);
 	wmspyferret[Id] = L.tileLayer.wms(wmsserver, {
 		file: file,
 		command: command,
@@ -459,26 +459,13 @@ $("#addMap").on('click', function() {
 	title = getTitle(wmspyferret[Id].wmsParams.command, wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
 	$('#title'+Id).html(title);
 	$('#title'+Id).attr('title', wmspyferret[Id].wmsParams.command + ' ' + wmspyferret[Id].wmsParams.variable.replace('%2B','+'));   
+	$('#key'+Id).width(width);
 	$('#key'+Id).children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
 							'&FILE=' + wmspyferret[Id].wmsParams.file +
 							'&COMMAND=' + wmspyferret[Id].wmsParams.command +
 							'&VARIABLE=' + wmspyferret[Id].wmsParams.variable.replace('+','%2B'));
-	$('#key'+Id).width(width);
 	syncMaps();
 
-});
-
-//===============================================
-$("body").on('click', ".map", function(event) {
-    if(event.ctrlKey) {
-	mapId = $(this)[0].id;
-	selectedId = parseInt(mapId.replace('map',''));
- 	$('#map'+selectedId).parent().remove();
-	delete map[selectedId];
-	delete wmspyferret[selectedId];
-	delete frontiers[selectedId];
-	//console.log(Object.keys(map));
-    }
 });
 
 //===============================================
