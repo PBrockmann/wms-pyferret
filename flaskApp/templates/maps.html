@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block head %}
+{{ super() }}
+
+    <script src="{{ url_for('static', filename = 'lib/bootstrap-add-clear.min.js') }}"></script>
+
+    <link rel='stylesheet' href="{{ url_for('static', filename = 'lib/bootstrap-toggle.min.css') }}" />
+    <script src="{{ url_for('static', filename = 'lib/bootstrap-toggle.min.js') }}"></script>
+
+    <link rel='stylesheet' href="{{ url_for('static', filename = 'lib/leaflet.css') }}" />
+    <script src="{{ url_for('static', filename = 'lib/leaflet.js') }}"></script>
+    <script src="{{ url_for('static', filename = 'lib/L.Map.Sync.js') }}"></script>
+
+    <style type='text/css'>
+        html, body { font-family: 'arial' }
+        .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px;}
+        .title { font-size: 12px; float: left; }
+	.map { width: 500px; height: 250px; }
+        .key { text-align: center; margin: auto; }
+        .key img { max-width: 400px; max-height: 50px; }		/* colorbar is 400x50 */
+	.leaflet-bar a, .leaflet-bar a:hover {
+    		height: 16px;
+    		line-height: 16px;
+    		width: 16px;
+	}
+	.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+    		font-size: 14px;
+		text-indent: 0px;
+	}
+	.close {
+		opacity: 0.0;
+	}
+	.mapContainer:hover > .header > .close {
+		opacity: 0.5;
+	}
+	#dialog {
+		display: none;
+		font-size: 12px;
+		height: 70px !important;
+	}
+	#commandLine {
+                width: 100%;
+		font-size: 12px;
+	}
+	#addMap {
+                left: 220px;
+		position: relative;
+		margin-top: 15px;
+	}
+	.ui-dialog { z-index: 1000 !important; }
+	.ui-dialog-title { font-size: 12px !important; }
+	.ui-icon-gripsmall-diagonal-se { z-index: 1000 !important; }
+   	.ui-icon-closethick { margin-top: 0; }
+	.forSelect {
+                width: 500px;
+		height: 60px;
+                left: 30px;
+		position: relative;
+	}
+	.forSelect label {
+		position: relative;
+		left: -30px;
+		margin-top: 0px;
+		margin-bottom: 0px;
+		font-weight: unset;
+		font-style: italic;
+		font-size: 13px;
+	}
+	#forToggle {
+		position: relative;
+		top: -200px;
+		left: 700px;
+	}
+    </style>
+{% endblock %}
+
+{% block page_content %}
+<div id="dialog">
+	<div id="fileOpen"></div>
+	<input id="commandLine" type="text" placeholder="New command">
+</div>
+
+<div class="forSelect">
+   <label for="file">File to open:</label>
+   <input type="text" class="form-control" id="file" list="list_file" type="search"
+		placeholder="Enter a dataset"
+		value="levitus_climatology"> 
+   <datalist id="list_file">
+	<option value="levitus_climatology" selected="selected">
+	<option value="monthly_navy_winds">
+   </datalist>
+</div>
+
+<div class="forSelect">
+   <label for="command">Command to run:</label>
+   <input type="text" class="form-control" id="command" list="list_command" type="search"
+		placeholder="Enter a command"
+		value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno"> 
+   <datalist id="list_command">
+	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_inferno" selected="selected">
+	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_plasma">
+	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_viridis">
+	<option value="shade/x=-180:180/y=-90:90/lev=10v/pal=mpl_PSU_magma">
+	<option value="shade/x=-180:180/y=-90:90/lev=20/pal=mpl_Div_PRGn">
+	<option value="shade/x=-180:180/y=-90:90/lev=20/pal=mpl_Div_RdBu">
+	<option value="shade/x=-180:180/y=-90:90/lev=20/pal=default">
+   </datalist>
+</div>
+
+<div class="forSelect">
+   <label for="variable">Variable to display:</label>
+   <input type="text" class="form-control" id="variable" list="list_variable" type="search"
+		placeholder="Enter a variable"
+		value="TEMP[k=1,l=1]"> 
+   <datalist id="list_variable">
+	<option value="TEMP[k=1,l=1]" selected="selected">
+	<option value="SALT[k=1,l=1]">
+   </datalist>
+</div>
+
+<p>
+<button type="button" class="btn btn-default" id="addMap">Insert a map</button>
+</p>
+
+<div id="forToggle">
+	<label for="pyferretWMS_toggle">pyferretWMS server:</label>
+	<input id="pyferretWMS_toggle" data-toggle="toggle" data-on="On" data-off="Off" data-onstyle="success" data-offstyle="danger" type="checkbox">
+</div>
+
+<div id="mapSpace"></div>
+
+<script type='text/javascript'>
+
+//===============================================
+var crs = L.CRS.EPSG4326;
+
+var Id = 0;
+var map = {};			// associative array
+var wmspyferret = {};
+var frontiers = {};
+var width = 500;
+var height = 250;
+
+var wmsserver = 'http://localhost:{{ port }}';
+
+//===============================================
+$("input:text").addClear({                      // https://github.com/gesquive/bootstrap-add-clear
+        showOnLoad: true,
+        onClear: function() {
+                $("#addMap").prop('disabled', true);
+        }
+});
+
+$("input:text").on('input', function() {
+        if ($(this).val().length != 0) {
+                $("#addMap").prop('disabled', false);
+        }
+});
+
+function newVariables(data) {			// get from the ajax request below that returns newVariables() 
+	//console.log(data);
+	for (i in data) {
+		dataEntry =  data[i] + '[k=1,l=1]';
+		optionExists = ($('#list_variable option[value="' + dataEntry + '"]').length > 0);
+		if (!optionExists) { $('#list_variable').append('<option value="' + dataEntry + '">'); }
+		if (i == data.length-1) { $("#variable").val(dataEntry); }				// preselect the 1st variable
+	}
+}
+
+$("#file").on('input', function() {
+	// to make cross-domain Ajax call possible https://www.sitepoint.com/jsonp-examples/
+	$.ajax({
+  		url: wmsserver,
+		data: 'SERVICE=WMS' + '&REQUEST=GetVariables' + '&FILE=' + $(this).val(),
+  		dataType: 'jsonp'		// will return newVariables()
+	});
+});
+
+//===============================================
+function syncMaps() {			// do all synchronizations (less efficient than a python itertools.permutations)
+	listIds = Object.keys(map);
+	//console.log(listIds);
+	for (i in listIds) {
+		for (j in listIds) {
+			if (i != j) {
+				map[listIds[i]].sync(map[listIds[j]]);
+			}
+		}
+	}
+}
+
+//===============================================
+function getTitle(aCommand, aVariable) {
+	// Inspect command to get /title qualifier if present
+	m = aCommand.match(/title=([\w&]+)/);		// equivalent to search in python
+	if (m != null)
+		title = m[1]
+	else 
+		title = aVariable 
+	return title
+}
+
+//===============================================
+$("body").on('click', ".title", function() {		// to get dynamically created divs
+	id = $(this).attr('id');
+	mapId = id.replace('title','');
+        file = wmspyferret[mapId].wmsParams.file;
+	$('#fileOpen').text(file);
+	$('#commandLine').val($('#'+id).attr('title'));
+	$('#commandLine').attr('mapId', mapId);
+	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 100,
+			      position: {my: "left+30 top+30", at: "left", of: this} });
+});
+
+//===============================================
+$('#commandLine').on('keypress', function(event) {
+    if(event.which === 13) {				// Enter key pressed
+        file = wmspyferret[mapId].wmsParams.file;
+        commandLine = $(this).val().split(' ');
+        command = commandLine[0];
+        commandLine.shift();
+        variable = commandLine.join(' ');       
+	mapId = $(this).attr('mapId');
+        wmspyferret[mapId].setParams({ command: command, variable: variable.replace('+','%2B') });
+	title = getTitle(command, variable);
+        $('#title'+mapId).html(title);   
+        $('#title'+mapId).attr('title', command + ' ' + variable);
+	$('#key'+mapId).children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
+							'&FILE=' + file +
+							'&COMMAND=' + command +
+							'&VARIABLE=' + variable.replace('+','%2B'));
+    }
+});
+
+//===============================================
+$("#addMap").on('click', function() {
+
+	console.log("aaaa");
+	file = $('#file').val();
+	optionExists = ($('#list_file option[value="' + file + '"]').length > 0);			// Append only if not existing
+	if (!optionExists) { $('#list_file').append('<option value="' + file + '">'); }
+
+	command = $('#command').val();
+	optionExists = ($('#list_command option[value="' + command + '"]').length > 0);
+	if (!optionExists) { $('#list_command').append('<option value="' + command + '">'); }
+
+	variable = $('#variable').val();
+	optionExists = ($('#list_variable option[value="' + variable + '"]').length > 0);
+	if (!optionExists) { $('#list_variable').append('<option value="' + variable + '">'); }
+
+	Id++;
+	divs = "<div class='mapContainer'>" + 
+   			"<div id='mapHeader" + Id + "' class='header'>" +
+   			    "<div id='title" + Id + "' class='title'></div>" +
+   			    "<div id='close" + Id + "' class='close ui-icon ui-icon-closethick'></div>" +
+   			"</div>" +
+			"<div id='map" + Id + "' class='map'></div>" + 
+   			"<div id='key" + Id + "' class='key'><img /></div>" +
+   		"</div>";
+	$('#mapSpace').append(divs);
+	wmspyferret[Id] = L.tileLayer.wms(wmsserver, {
+		file: file,
+		command: command,
+		variable: variable,
+	    	crs: crs,
+		format: 'image/png',
+		transparent: true,
+	    	uppercase: true
+	});
+	frontiers[Id] = L.tileLayer.wms('http://www.globalcarbonatlas.org:8080/geoserver/GCA/wms', {
+		layers: 'GCA:GCA_frontiersCountryAndRegions',
+		format: 'image/png',
+    		crs: crs,
+		transparent: true
+	});
+	map[Id] = L.map('map'+Id, {
+		layers: [wmspyferret[Id], frontiers[Id]],
+	    	crs: crs,
+		center: [0, 0],
+		zoom: 0,
+	    	attributionControl: false
+	});
+	$('#map'+Id).resizable();
+	$('#map'+Id).width(width);
+	$('#map'+Id).height(height);
+	title = getTitle(wmspyferret[Id].wmsParams.command, wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
+	$('#title'+Id).html(title);
+	$('#title'+Id).attr('title', wmspyferret[Id].wmsParams.command + ' ' + wmspyferret[Id].wmsParams.variable.replace('%2B','+'));   
+	$('#key'+Id).children('img').css('width', width + 'px');
+	$('#key'+Id).children('img').css('height', parseInt(width/8) + 'px');			// according to ratio 400/50 = 8
+	$('#key'+Id).children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
+							'&FILE=' + wmspyferret[Id].wmsParams.file +
+							'&COMMAND=' + wmspyferret[Id].wmsParams.command +
+							'&VARIABLE=' + wmspyferret[Id].wmsParams.variable.replace('+','%2B'));
+	syncMaps();
+
+});
+
+//===============================================
+$("body").on('click', ".close", function(event) {
+    closeId = $(this)[0].id;
+    selectedId = parseInt(closeId.replace('close',''));
+    $('#map'+selectedId).parent().remove();
+    delete map[selectedId];
+    delete wmspyferret[selectedId];
+    delete frontiers[selectedId];
+});
+
+//===============================================
+$(document).on('resizestop', '.map', function() {
+	width = $(this).width();
+	height = $(this).height();
+	for (mapId = 1; mapId <= Id ; mapId++) {
+		$('#map'+mapId).width(width);
+		$('#map'+mapId).height(height);
+		$('#header'+mapId).width(width);
+		$('#key'+mapId).children('img').css('width', width + 'px');
+		$('#key'+mapId).children('img').css('height', parseInt(width/8) + 'px');		// according to ratio 400/50 = 8
+	}
+});
+
+//===============================================
+$('#pyferretWMS_toggle').on('change', function() {
+	toStart = $(this).prop('checked');
+	//console.log(toStart);
+	$.ajax({
+                url: '/pyferretWMS_toggle',
+		type: 'GET',
+		data: { 'toStart': toStart }
+        });
+});
+
+</script>
+{% endblock %}
