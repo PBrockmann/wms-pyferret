@@ -486,7 +486,7 @@ $(document).on('resizestop', '.map', function() {
 	for (mapId = 1; mapId <= Id ; mapId++) {
 		$('#map'+mapId).width(width);
 		$('#map'+mapId).height(height);
-		$('#header'+mapId).width(width);
+		$('#mapHeader'+mapId).width(width);
 		$('#key'+mapId).children('img').css('width', width + 'px');
 		$('#key'+mapId).children('img').css('height', parseInt(width/8) + 'px');		// according to ratio 400/50 = 8
 	}
