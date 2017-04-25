@@ -14,8 +14,9 @@
 
     <style type='text/css'>
         html, body { font-family: 'arial' }
-        .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px;}
-        .title { font-size: 12px; float: left; }
+        .mapContainer { display: inline-block ; margin-left: 10px; margin-top: 10px; }
+        .title { font-size: 12px; float: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .controls { font-size: 12px; float: right; }
 	.map { width: 500px; height: 250px; }
         .key { text-align: center; margin: auto; }
         .key img { max-width: 400px; max-height: 50px; }		/* colorbar is 400x50 */
@@ -28,10 +29,10 @@
     		font-size: 14px;
 		text-indent: 0px;
 	}
-	.close {
+	.ui-icon {
 		opacity: 0.0;
 	}
-	.mapContainer:hover > .header > .close {
+	.mapContainer:hover > .header > .controls > .ui-icon {
 		opacity: 0.5;
 	}
 	#dialog {
@@ -51,7 +52,7 @@
 	.ui-dialog { z-index: 1000 !important; }
 	.ui-dialog-title { font-size: 12px !important; }
 	.ui-icon-gripsmall-diagonal-se { z-index: 1000 !important; }
-   	.ui-icon-closethick { margin-top: 0; }
+   	.ui-icon { margin-top: 0; }
 	.forSelect {
                 width: 500px;
 		height: 60px;
@@ -63,7 +64,7 @@
 		left: -30px;
 		margin-top: 0px;
 		margin-bottom: 0px;
-		font-weight: unset;
+		font-weight: normal;
 		font-style: italic;
 		font-size: 13px;
 	}
@@ -195,9 +196,9 @@ function getTitle(aCommand, aVariable) {
 	// Inspect command to get /title qualifier if present
 	m = aCommand.match(/title=([\w&]+)/);		// equivalent to search in python
 	if (m != null)
-		title = m[1]
+		title = m[1];
 	else 
-		title = aVariable 
+		title = aVariable; 
 	return title
 }
 
@@ -236,7 +237,6 @@ $('#commandLine').on('keypress', function(event) {
 //===============================================
 $("#addMap").on('click', function() {
 
-	console.log("aaaa");
 	file = $('#file').val();
 	optionExists = ($('#list_file option[value="' + file + '"]').length > 0);			// Append only if not existing
 	if (!optionExists) { $('#list_file').append('<option value="' + file + '">'); }
@@ -253,7 +253,13 @@ $("#addMap").on('click', function() {
 	divs = "<div class='mapContainer'>" + 
    			"<div id='mapHeader" + Id + "' class='header'>" +
    			    "<div id='title" + Id + "' class='title'></div>" +
-   			    "<div id='close" + Id + "' class='close ui-icon ui-icon-closethick'></div>" +
+   			    "<div id='controls" + Id + "' class='controls'>" +
+   			    	"<div id='up" + Id + "' class='up ui-icon ui-icon-circle-arrow-n'></div>" +
+   			    	"<div id='down" + Id + "' class='down ui-icon ui-icon-circle-arrow-s'></div>" +
+   			    	"<div id='backward" + Id + "' class='backward ui-icon ui-icon-circle-arrow-w'></div>" +
+   			    	"<div id='forward" + Id + "' class='forward ui-icon ui-icon-circle-arrow-e'></div>" +
+   			    	"<div id='close" + Id + "' class='close ui-icon ui-icon-closethick'></div>" +
+   			    "</div>" +
    			"</div>" +
 			"<div id='map" + Id + "' class='map'></div>" + 
    			"<div id='key" + Id + "' class='key'><img /></div>" +
@@ -298,6 +304,66 @@ $("#addMap").on('click', function() {
 });
 
 //===============================================
+$("body").on('click', ".up", function(event) {
+	id = $(this).attr('id');
+	mapId = id.replace('up','');
+	variable = wmspyferret[mapId].wmsParams.variable;
+	m = variable.match(/k=([0-9]+)/);		// equivalent to search in python
+	if (m != null)
+		kindex = parseInt(m[1]);
+		newVariable = variable.replace(m[0], 'k=' + (kindex-1).toString());
+		wmspyferret[mapId].setParams({ variable: newVariable });
+		title = getTitle(wmspyferret[mapId].wmsParams.command, wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
+		$('#title'+mapId).html(title);
+		$('#title'+mapId).attr('title', wmspyferret[mapId].wmsParams.command + ' ' + wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));   
+});
+
+//===============================================
+$("body").on('click', ".down", function(event) {
+	id = $(this).attr('id');
+	mapId = id.replace('down','');
+	variable = wmspyferret[mapId].wmsParams.variable;
+	m = variable.match(/k=([0-9]+)/);		// equivalent to search in python
+	if (m != null)
+		kindex = parseInt(m[1]);
+		newVariable = variable.replace(m[0], 'k=' + (kindex+1).toString());
+		wmspyferret[mapId].setParams({ variable: newVariable });
+		title = getTitle(wmspyferret[mapId].wmsParams.command, wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
+		$('#title'+mapId).html(title);
+		$('#title'+mapId).attr('title', wmspyferret[mapId].wmsParams.command + ' ' + wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));   
+});
+
+//===============================================
+$("body").on('click', ".backward", function(event) {
+	id = $(this).attr('id');
+	mapId = id.replace('backward','');
+	variable = wmspyferret[mapId].wmsParams.variable;
+	m = variable.match(/l=([0-9]+)/);		// equivalent to search in python
+	if (m != null)
+		lindex = parseInt(m[1]);
+		newVariable = variable.replace(m[0], 'l=' + (lindex-1).toString());
+		wmspyferret[mapId].setParams({ variable: newVariable });
+		title = getTitle(wmspyferret[mapId].wmsParams.command, wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
+		$('#title'+mapId).html(title);
+		$('#title'+mapId).attr('title', wmspyferret[mapId].wmsParams.command + ' ' + wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));   
+});
+
+//===============================================
+$("body").on('click', ".forward", function(event) {
+	id = $(this).attr('id');
+	mapId = id.replace('forward','');
+	variable = wmspyferret[mapId].wmsParams.variable;
+	m = variable.match(/l=([0-9]+)/);		// equivalent to search in python
+	if (m != null)
+		lindex = parseInt(m[1]);
+		newVariable = variable.replace(m[0], 'l=' + (lindex+1).toString());
+		wmspyferret[mapId].setParams({ variable: newVariable });
+		title = getTitle(wmspyferret[mapId].wmsParams.command, wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
+		$('#title'+mapId).html(title);
+		$('#title'+mapId).attr('title', wmspyferret[mapId].wmsParams.command + ' ' + wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));   
+});
+
+//===============================================
 $("body").on('click', ".close", function(event) {
     closeId = $(this)[0].id;
     selectedId = parseInt(closeId.replace('close',''));
@@ -315,6 +381,7 @@ $(document).on('resizestop', '.map', function() {
 		$('#map'+mapId).width(width);
 		$('#map'+mapId).height(height);
 		$('#mapHeader'+mapId).width(width);
+		$('#title'+mapId).css('max-width', width-16*5 + 'px');
 		$('#key'+mapId).children('img').css('width', width + 'px');
 		$('#key'+mapId).children('img').css('height', parseInt(width/8) + 'px');		// according to ratio 400/50 = 8
 	}
