@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block head %}
+<title>MakeMeMaps/Maps</title>
 {{ super() }}
 
     <script src="{{ url_for('static', filename = 'lib/bootstrap-add-clear.min.js') }}"></script>
@@ -29,16 +30,11 @@
     		font-size: 14px;
 		text-indent: 0px;
 	}
-	.ui-icon {
-		opacity: 0.0;
-	}
-	.mapContainer:hover > .header > .controls > .ui-icon {
-		opacity: 0.5;
-	}
+	.controls > .ui-icon { opacity: 0.0; }
+	.mapContainer:hover > .header > .controls > .ui-icon { opacity: 0.5; }
 	#dialog {
 		display: none;
 		font-size: 12px;
-		height: 70px !important;
 	}
 	#commandLine {
                 width: 100%;
@@ -52,7 +48,8 @@
 	.ui-dialog { z-index: 1000 !important; }
 	.ui-dialog-title { font-size: 12px !important; }
 	.ui-icon-gripsmall-diagonal-se { z-index: 1000 !important; }
-   	.ui-icon { margin-top: 0; }
+	.ui-icon { margin-top: 0; }
+	.ui-state-default .ui-icon { background-image: url("../img/ui-icons_888888_256x240.png"); }
 	.forSelect {
                 width: 500px;
 		height: 60px;
@@ -79,7 +76,7 @@
 {% block page_content %}
 <div id="dialog">
 	<div id="fileOpen"></div>
-	<input id="commandLine" type="text" placeholder="New command">
+	<input type="text" class="form-control" id="commandLine" placeholder="New command">
 </div>
 
 <div class="forSelect">
@@ -210,7 +207,7 @@ $("body").on('click', ".title", function() {		// to get dynamically created divs
 	$('#fileOpen').text(file);
 	$('#commandLine').val($('#'+id).attr('title'));
 	$('#commandLine').attr('mapId', mapId);
-	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 100,
+	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 120,
 			      position: {my: "left+30 top+30", at: "left", of: this} });
 });
 

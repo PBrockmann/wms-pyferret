@@ -2,7 +2,6 @@
 
 <head>
 {% block head %}
-<title>Make Me Maps</title>
 <script src="{{ url_for('static', filename = 'lib/jquery.min.js') }}"></script>
 <link href="{{ url_for('static', filename = 'lib/bootstrap-3.3.7-dist/css/bootstrap.min.css') }}" rel="stylesheet">
 <script src="{{ url_for('static', filename = 'lib/bootstrap-3.3.7-dist/js/bootstrap.min.js') }}"></script>
@@ -35,10 +34,10 @@
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-            	<li><a id="index" class="navbar-brand" href="/">MakeMeMaps</a></li>
-                <li><a id="maps" href="/maps">Maps</a></li>
-                <li><a id="help" href="/help">Help</a></li>
-                <li><a id="contact" href="/contact">Contact</a></li>
+            	<li><a id="index" class="navbar-brand" href="/" target="main">MakeMeMaps</a></li>
+                <li><a id="maps" href="/maps" target="maps">Maps</a></li>
+                <li><a id="help" href="/help" target="help">Help</a></li>
+                <li><a id="contact" href="/contact" target="contact">Contact</a></li>
             </ul>
         </div>
     </div>
