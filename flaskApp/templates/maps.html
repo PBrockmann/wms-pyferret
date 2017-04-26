@@ -340,6 +340,7 @@ $("body").on('click', ".up", function(event) {
 			m = variable.match(/k=([0-9]+)/);		// equivalent to search in python
 			if (m != null) {
 				kindex = parseInt(m[1]);
+				if (kindex == 1) { continue }
 				newVariable = variable.replace(m[0], 'k=' + (kindex-1).toString());
 				wmspyferret[mapId].setParams({ variable: newVariable });
 				title = getTitle(wmspyferret[mapId].wmsParams.command, wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
@@ -376,6 +377,7 @@ $("body").on('click', ".backward", function(event) {
 			m = variable.match(/l=([0-9]+)/);		// equivalent to search in python
 			if (m != null) {
 				lindex = parseInt(m[1]);
+				if (lindex == 1) { continue }
 				newVariable = variable.replace(m[0], 'l=' + (lindex-1).toString());
 				wmspyferret[mapId].setParams({ variable: newVariable });
 				title = getTitle(wmspyferret[mapId].wmsParams.command, wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
@@ -412,6 +414,7 @@ $("body").on('click', ".close", function(event) {
     delete map[selectedId];
     delete wmspyferret[selectedId];
     delete frontiers[selectedId];
+    delete syncControls[selectedId];
 });
 
 //===============================================
