@@ -312,7 +312,6 @@ $("#addMap").on('click', function() {
 							'&VARIABLE=' + wmspyferret[Id].wmsParams.variable.replace('+','%2B'));
 	syncMaps();
 	syncControls[Id] = true;
-	map[Id].invalidateSize(true);
 });
 
 //===============================================
@@ -428,7 +427,6 @@ $(document).on('resizestop', '.map', function() {
 		$('#title'+mapId).css('max-width', width-16*5 + 'px');
 		$('#key'+mapId).children('img').css('width', width + 'px');
 		$('#key'+mapId).children('img').css('height', parseInt(width/8) + 'px');		// according to ratio 400/50 = 8
-		map[mapId].invalidateSize(true);
 	}
 });
 
