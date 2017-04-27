@@ -144,6 +144,7 @@
 var crs = L.CRS.EPSG4326;
 
 var Id = 0;
+var currentId = 0;
 var map = {};			// associative array
 var wmspyferret = {};
 var frontiers = {};
@@ -212,30 +213,30 @@ function getTitle(aCommand, aVariable) {
 
 //===============================================
 $("body").on('click', ".title", function() {		// to get dynamically created divs
-	id = $(this).attr('id');
-	mapId = id.replace('title','');
-        file = wmspyferret[mapId].wmsParams.file;
+	attrId = $(this).attr('id');
+	currentId = attrId.replace('title','');
+        file = wmspyferret[currentId].wmsParams.file;
 	$('#fileOpen').text(file);
-	$('#commandLine').val($('#'+id).attr('title'));
-	$('#commandLine').attr('mapId', mapId);
-	$('#dialog').dialog({ title: 'Command of map #'+mapId, modal: false, width: 600, height: 120,
+	$('#commandLine').val($('#'+attrId).attr('title'));
+	$('#commandLine').attr('mapId', currentId);
+	$('#dialog').dialog({ title: 'Command of map #'+currentId, modal: false, width: 600, height: 120,
 			      position: {my: "left+30 top+30", at: "left", of: this} });
 });
 
 //===============================================
 $('#commandLine').on('keypress', function(event) {
     if(event.which === 13) {				// Enter key pressed
-        file = wmspyferret[mapId].wmsParams.file;
+        file = wmspyferret[currentId].wmsParams.file;
         commandLine = $(this).val().split(' ');
         command = commandLine[0];
         commandLine.shift();
         variable = commandLine.join(' ');       
-	mapId = $(this).attr('mapId');
-        wmspyferret[mapId].setParams({ command: command, variable: variable.replace('+','%2B') });
+	Id = $(this).attr('mapId');
+        wmspyferret[Id].setParams({ command: command, variable: variable.replace('+','%2B') });
 	title = getTitle(command, variable);
-        $('#title'+mapId).html(title);   
-        $('#title'+mapId).attr('title', command + ' ' + variable);
-	$('#key'+mapId).children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
+        $('#title'+Id).html(title);   
+        $('#title'+Id).attr('title', command + ' ' + variable);
+	$('#key'+Id).children('img').attr('src', wmsserver + '?SERVICE=WMS&REQUEST=GetColorBar' +
 							'&FILE=' + file +
 							'&COMMAND=' + command +
 							'&VARIABLE=' + variable.replace('+','%2B'));
@@ -310,41 +311,44 @@ $("#addMap").on('click', function() {
 							'&FILE=' + wmspyferret[Id].wmsParams.file +
 							'&COMMAND=' + wmspyferret[Id].wmsParams.command +
 							'&VARIABLE=' + wmspyferret[Id].wmsParams.variable.replace('+','%2B'));
+	map[Id].invalidateSize();
 	syncMaps();
 	syncControls[Id] = true;
 });
 
 //===============================================
 $("body").on('click', ".link", function(event) {
-	id = $(this).attr('id');
-	mapId = parseInt(id.replace('link',''));
-	if (syncControls[mapId]) {
-		$('#link'+mapId).attr('class', 'link fa fa-unlink');
-		syncControls[mapId] = false;
-		$('#arrowControls'+mapId).css('pointer-events', 'none');
-		$('#arrowControls'+mapId).css('opacity', 0.2);
+	attrId = $(this).attr('id');
+	Id = parseInt(attrId.replace('link',''));
+	if (syncControls[Id]) {
+		$('#link'+Id).attr('class', 'link fa fa-unlink');
+		syncControls[Id] = false;
+		$('#arrowControls'+Id).css('pointer-events', 'none');
+		$('#arrowControls'+Id).css('opacity', 0.2);
 	} else {
-		$('#link'+mapId).attr('class', 'link fa fa-link');
-		syncControls[mapId] = true;
-		$('#arrowControls'+mapId).css('pointer-events', 'auto');
-		$('#arrowControls'+mapId).css('opacity', 0.7);
+		$('#link'+Id).attr('class', 'link fa fa-link');
+		syncControls[Id] = true;
+		$('#arrowControls'+Id).css('pointer-events', 'auto');
+		$('#arrowControls'+Id).css('opacity', 0.7);
 	}
 });
 
 //===============================================
 $("body").on('click', ".up", function(event) {
-	for (mapId = 1; mapId <= Id ; mapId++) {
-		if (syncControls[mapId]) {
-			variable = wmspyferret[mapId].wmsParams.variable;
+	listIds = Object.keys(map);
+	for (i in listIds) {
+		Id = listIds[i];		
+		if (syncControls[Id]) {
+			variable = wmspyferret[Id].wmsParams.variable;
 			m = variable.match(/k=([0-9]+)/);		// equivalent to search in python
 			if (m != null) {
 				kindex = parseInt(m[1]);
 				if (kindex == 1) { continue }
 				newVariable = variable.replace(m[0], 'k=' + (kindex-1).toString());
-				wmspyferret[mapId].setParams({ variable: newVariable });
-				title = getTitle(wmspyferret[mapId].wmsParams.command, wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
-				$('#title'+mapId).html(title);
-				$('#title'+mapId).attr('title', wmspyferret[mapId].wmsParams.command + ' ' + wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
+				wmspyferret[Id].setParams({ variable: newVariable });
+				title = getTitle(wmspyferret[Id].wmsParams.command, wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
+				$('#title'+Id).html(title);
+				$('#title'+Id).attr('title', wmspyferret[Id].wmsParams.command + ' ' + wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
 			}
 		}
 	}
@@ -352,17 +356,19 @@ $("body").on('click', ".up", function(event) {
 
 //===============================================
 $("body").on('click', ".down", function(event) {
-	for (mapId = 1; mapId <= Id ; mapId++) {
-		if (syncControls[mapId]) {
-			variable = wmspyferret[mapId].wmsParams.variable;
+	listIds = Object.keys(map);
+	for (i in listIds) {
+		Id = listIds[i];		
+		if (syncControls[Id]) {
+			variable = wmspyferret[Id].wmsParams.variable;
 			m = variable.match(/k=([0-9]+)/);		// equivalent to search in python
 			if (m != null) {
 				kindex = parseInt(m[1]);
 				newVariable = variable.replace(m[0], 'k=' + (kindex+1).toString());
-				wmspyferret[mapId].setParams({ variable: newVariable });
-				title = getTitle(wmspyferret[mapId].wmsParams.command, wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
-				$('#title'+mapId).html(title);
-				$('#title'+mapId).attr('title', wmspyferret[mapId].wmsParams.command + ' ' + wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
+				wmspyferret[Id].setParams({ variable: newVariable });
+				title = getTitle(wmspyferret[Id].wmsParams.command, wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
+				$('#title'+Id).html(title);
+				$('#title'+Id).attr('title', wmspyferret[Id].wmsParams.command + ' ' + wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
 			}
 		}
 	}
@@ -370,18 +376,20 @@ $("body").on('click', ".down", function(event) {
 
 //===============================================
 $("body").on('click', ".backward", function(event) {
-	for (mapId = 1; mapId <= Id ; mapId++) {
-		if (syncControls[mapId]) {
-			variable = wmspyferret[mapId].wmsParams.variable;
+	listIds = Object.keys(map);
+	for (i in listIds) {
+		Id = listIds[i];		
+		if (syncControls[Id]) {
+			variable = wmspyferret[Id].wmsParams.variable;
 			m = variable.match(/l=([0-9]+)/);		// equivalent to search in python
 			if (m != null) {
 				lindex = parseInt(m[1]);
 				if (lindex == 1) { continue }
 				newVariable = variable.replace(m[0], 'l=' + (lindex-1).toString());
-				wmspyferret[mapId].setParams({ variable: newVariable });
-				title = getTitle(wmspyferret[mapId].wmsParams.command, wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
-				$('#title'+mapId).html(title);
-				$('#title'+mapId).attr('title', wmspyferret[mapId].wmsParams.command + ' ' + wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
+				wmspyferret[Id].setParams({ variable: newVariable });
+				title = getTitle(wmspyferret[Id].wmsParams.command, wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
+				$('#title'+Id).html(title);
+				$('#title'+Id).attr('title', wmspyferret[Id].wmsParams.command + ' ' + wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
 			}
 		}
 	}
@@ -389,17 +397,19 @@ $("body").on('click', ".backward", function(event) {
 
 //===============================================
 $("body").on('click', ".forward", function(event) {
-	for (mapId = 1; mapId <= Id ; mapId++) {
-		if (syncControls[mapId]) {
-			variable = wmspyferret[mapId].wmsParams.variable;
+	listIds = Object.keys(map);
+	for (i in listIds) {
+		Id = listIds[i];		
+		if (syncControls[Id]) {
+			variable = wmspyferret[Id].wmsParams.variable;
 			m = variable.match(/l=([0-9]+)/);		// equivalent to search in python
 			if (m != null) {
 				lindex = parseInt(m[1]);
 				newVariable = variable.replace(m[0], 'l=' + (lindex+1).toString());
-				wmspyferret[mapId].setParams({ variable: newVariable });
-				title = getTitle(wmspyferret[mapId].wmsParams.command, wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
-				$('#title'+mapId).html(title);
-				$('#title'+mapId).attr('title', wmspyferret[mapId].wmsParams.command + ' ' + wmspyferret[mapId].wmsParams.variable.replace('%2B','+'));
+				wmspyferret[Id].setParams({ variable: newVariable });
+				title = getTitle(wmspyferret[Id].wmsParams.command, wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
+				$('#title'+Id).html(title);
+				$('#title'+Id).attr('title', wmspyferret[Id].wmsParams.command + ' ' + wmspyferret[Id].wmsParams.variable.replace('%2B','+'));
 			}
 		}
 	}
@@ -420,13 +430,16 @@ $("body").on('click', ".close", function(event) {
 $(document).on('resizestop', '.map', function() {
 	width = $(this).width();
 	height = $(this).height();
-	for (mapId = 1; mapId <= Id ; mapId++) {
-		$('#map'+mapId).width(width);
-		$('#map'+mapId).height(height);
-		$('#mapHeader'+mapId).width(width);
-		$('#title'+mapId).css('max-width', width-16*5 + 'px');
-		$('#key'+mapId).children('img').css('width', width + 'px');
-		$('#key'+mapId).children('img').css('height', parseInt(width/8) + 'px');		// according to ratio 400/50 = 8
+	listIds = Object.keys(map);
+	for (i in listIds) {
+		Id = listIds[i];		
+		$('#map'+Id).width(width);
+		$('#map'+Id).height(height);
+		$('#mapHeader'+Id).width(width);
+		$('#title'+Id).css('max-width', width-16*5 + 'px');
+		$('#key'+Id).children('img').css('width', width + 'px');
+		$('#key'+Id).children('img').css('height', parseInt(width/8) + 'px');		// according to ratio 400/50 = 8
+		map[Id].invalidateSize();
 	}
 });
 
