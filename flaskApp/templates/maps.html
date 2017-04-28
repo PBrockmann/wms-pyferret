@@ -444,13 +444,25 @@ $(document).on('resizestop', '.map', function() {
 });
 
 //===============================================
-$('#pyferretWMS_toggle').on('change', function() {
-	toStart = $(this).prop('checked');
-	//console.log(toStart);
+function get_pyferretWMS_status() {
 	$.ajax({
-                url: '/pyferretWMS_toggle',
+		url: '/pyferretWMS_status',
+		success : function(status) {
+				//console.log(status);
+				$('#pyferretWMS_toggle').bootstrapToggle(status);
+       		}
+	});
+}
+get_pyferretWMS_status();
+setInterval(get_pyferretWMS_status, 2000);
+
+$('#pyferretWMS_toggle').on('change', function() {
+	checked = $(this).prop('checked');
+	if (checked) { cmd = 'on'; } else { cmd = 'off'}
+	$.ajax({
+               	url: '/pyferretWMS_toggle',
 		type: 'GET',
-		data: { 'toStart': toStart }
+		data: { 'cmd': cmd }
         });
 });
 

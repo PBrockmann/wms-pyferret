@@ -17,6 +17,9 @@
 .navbar-nav > .active > a {
     font-weight: bold !important;
 }
+#logout button {
+    margin: 8px;
+}
 </style>
 {% endblock %}
 </head>
@@ -40,6 +43,7 @@
                 <li><a id="help" href="/help" target="help">Help</a></li>
                 <li><a id="contact" href="/contact" target="contact">Contact</a></li>
             </ul>
+	    <a id="logout" href="/logout"><button type="button" class="btn btn-primary pull-right">Logout</button></a>
         </div>
     </div>
 </div>
@@ -50,7 +54,7 @@
 
 <footer class="footer noPrint">
        <div class="container">
-		<p class="text-muted credit">Created by <a target="_blank" href="http://www.lsce.ipsl.fr/en"><span title="Climate and Environment Sciences Laboratory" style="font-weight:bold;">LSCE</span></a>&nbsp;<a target="_blank" href="http://www.lsce.ipsl.fr/en"><img src="{{ url_for('static', filename = 'images/LSCE_Icon.png') }}" title="Climate and Environment Sciences Laboratory"/></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version 0.5 - 2017/04/19</p>
+		<p class="text-muted credit">Created by <a target="_blank" href="http://www.lsce.ipsl.fr/en"><span title="Climate and Environment Sciences Laboratory" style="font-weight:bold;">LSCE</span></a>&nbsp;<a target="_blank" href="http://www.lsce.ipsl.fr/en"><img src="{{ url_for('static', filename = 'images/LSCE_Icon.png') }}" title="Climate and Environment Sciences Laboratory"/></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version 0.6 - 2017/04/28</p>
       </div>
 </footer>
 
