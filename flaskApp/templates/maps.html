@@ -204,10 +204,7 @@ function syncMaps() {			// do all synchronizations (less efficient than a python
 function getTitle(aCommand, aVariable) {
 	// Inspect command to get /title qualifier if present
 	m = aCommand.match(/title=([\w&]+)/);		// equivalent to search in python
-	if (m != null)
-		title = m[1];
-	else 
-		title = aVariable; 
+	if (m != null) { title = m[1]; } else { title = aVariable; } 
 	return title
 }
 
@@ -334,7 +331,15 @@ $("body").on('click', ".link", function(event) {
 });
 
 //===============================================
-$("body").on('click', ".up", function(event) {
+$("body").on('keydown', ".mapContainer", function(event) {
+    if (event.which === 88)      { control_backward(); }		// x 
+    else if (event.which === 67) { control_forward(); }			// c
+    else if (event.which === 69) { control_up(); }			// e
+    else if (event.which === 68) { control_down(); }			// d
+});
+
+//===============================================
+function control_up() {
 	listIds = Object.keys(map);
 	for (i in listIds) {
 		Id = listIds[i];		
@@ -352,10 +357,12 @@ $("body").on('click', ".up", function(event) {
 			}
 		}
 	}
-});
+}
+
+$("body").on('click', ".up", function(event) { control_up(); });
 
 //===============================================
-$("body").on('click', ".down", function(event) {
+function control_down() {
 	listIds = Object.keys(map);
 	for (i in listIds) {
 		Id = listIds[i];		
@@ -372,10 +379,12 @@ $("body").on('click', ".down", function(event) {
 			}
 		}
 	}
-});
+}
+
+$("body").on('click', ".down", function(event) { control_down(); });
 
 //===============================================
-$("body").on('click', ".backward", function(event) {
+function control_backward () {
 	listIds = Object.keys(map);
 	for (i in listIds) {
 		Id = listIds[i];		
@@ -393,10 +402,12 @@ $("body").on('click', ".backward", function(event) {
 			}
 		}
 	}
-});
+}
+
+$("body").on('click', ".backward", function(event) { control_backward(); });
 
 //===============================================
-$("body").on('click', ".forward", function(event) {
+function control_forward () {
 	listIds = Object.keys(map);
 	for (i in listIds) {
 		Id = listIds[i];		
@@ -413,7 +424,9 @@ $("body").on('click', ".forward", function(event) {
 			}
 		}
 	}
-});
+}
+
+$("body").on('click', ".forward", function(event) { control_forward(); });
 
 //===============================================
 $("body").on('click', ".close", function(event) {
