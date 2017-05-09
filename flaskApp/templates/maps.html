@@ -13,6 +13,9 @@
     <script src="{{ url_for('static', filename = 'lib/leaflet.js') }}"></script>
     <script src="{{ url_for('static', filename = 'lib/L.Map.Sync.js') }}"></script>
 
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'lib/Control.Loading.css') }}" />
+    <script src="{{ url_for('static', filename = 'lib/Control.Loading.js') }}"></script>
+
     <link rel='stylesheet' href="{{ url_for('static', filename = 'lib/font-awesome-4.7.0/css/font-awesome.min.css') }}" />
 
     <style type='text/css'>
@@ -294,7 +297,8 @@ $("#addMap").on('click', function() {
 	    	crs: crs,
 		center: [0, 0],
 		zoom: 0,
-	    	attributionControl: false
+	    	attributionControl: false,
+                loadingControl: true
 	});
 	$('#map'+Id).resizable();
 	$('#map'+Id).width(width);

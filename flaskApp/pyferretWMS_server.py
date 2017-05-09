@@ -132,7 +132,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 
     def __init__(self, app, options=None):
 	# Start pyferret	
-	pyferret.start(journal=False, unmapped=True, quiet=True, verify=False)
+	pyferret.start(journal=False, unmapped=True, quiet=True, verify=False, memsize=50)
 	
 	master_pid = os.getpid()
 	print('---------> gunicorn master pid: ', master_pid)
