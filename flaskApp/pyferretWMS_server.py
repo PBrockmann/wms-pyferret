@@ -77,7 +77,7 @@ def handler_app(environ, start_response):
 				ftmp.close()
 				#os.remove(tmpdir + '/' + tmpname)
 
-			print(os.getpid())
+			print('GetDatasets: ', os.getpid())
 
 			start_response('200 OK', [('content-type', 'text/plain')])
 			return iter('displayDatasets(' + json.dumps(txt) + ')') 
@@ -113,6 +113,8 @@ def handler_app(environ, start_response):
 
         		HLIM = '/hlim=' + BBOX[0] + ':' + BBOX[2]
         		VLIM = '/vlim=' + BBOX[1] + ':' + BBOX[3]
+
+			print('GetMap: ', os.getpid())
 
         		pyferret.run('set window/aspect=1/outline=5')           # outline=5 is a strange setting but works otherwise get outline around polygons
         		pyferret.run('go margins 0 0 0 0')
