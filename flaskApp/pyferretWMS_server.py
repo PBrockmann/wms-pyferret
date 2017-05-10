@@ -75,12 +75,12 @@ def handler_app(environ, start_response):
 				ftmp = open(tmpdir + '/' + tmpname, 'rb')
 				txt = ftmp.read()
 				ftmp.close()
-				#os.remove(tmpdir + '/' + tmpname)
+				os.remove(tmpdir + '/' + tmpname)
 
 			print('GetDatasets: ', os.getpid())
 
 			start_response('200 OK', [('content-type', 'text/plain')])
-			return iter('displayDatasets(' + json.dumps(txt) + ')') 
+			return iter('displayDatasets(' + json.dumps(str(os.getpid()) + '\n\n' + txt) + ')') 
 
 		#---------------------------------------------------------
 		elif fields['REQUEST'] == 'GetColorBar':
