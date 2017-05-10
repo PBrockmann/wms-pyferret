@@ -34,7 +34,10 @@ def handler_app(environ, start_response):
 		if fields['SERVICE'] != 'WMS':
 			raise
 
-        	FILE = fields['FILE']
+		try:
+        		FILE = fields['FILE']
+		except:
+        		FILE = None
 		try:
         		COMMAND = fields['COMMAND']
 		except:
@@ -48,13 +51,10 @@ def handler_app(environ, start_response):
 		except:
         		PATTERN = None
 
-        	pyferret.run('use ' + FILE)
-
-                tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
-                tmpname = os.path.basename(tmpname)
 
 		#---------------------------------------------------------
 		if fields['REQUEST'] == 'GetVariables':
+        		pyferret.run('use ' + FILE)
 			varnamesdict = pyferret.getstrdata('..varnames')
 			variables = varnamesdict['data'].flatten().tolist()
 
@@ -63,7 +63,31 @@ def handler_app(environ, start_response):
 			return iter('newVariables(' + json.dumps(variables) + ')')			# return jsonp
 
 		#---------------------------------------------------------
+		elif fields['REQUEST'] == 'GetDatasets':
+                	tmpname = tempfile.NamedTemporaryFile(suffix='.txt').name
+                	tmpname = os.path.basename(tmpname)
+
+            		pyferret.run('set redirect /clobber /file="%s" stdout' % (tmpdir + '/' + tmpname))
+			pyferret.run('show data')
+			pyferret.run('cancel redirect')
+
+			if os.path.isfile(tmpdir + '/' + tmpname):
+				ftmp = open(tmpdir + '/' + tmpname, 'rb')
+				txt = ftmp.read()
+				ftmp.close()
+				#os.remove(tmpdir + '/' + tmpname)
+
+			print(os.getpid())
+
+			start_response('200 OK', [('content-type', 'text/plain')])
+			return iter('displayDatasets(' + json.dumps(txt) + ')') 
+
+		#---------------------------------------------------------
 		elif fields['REQUEST'] == 'GetColorBar':
+        		pyferret.run('use ' + FILE)
+                	tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
+                	tmpname = os.path.basename(tmpname)
+
                 	pyferret.run('set window/aspect=1/outline=0')
                 	pyferret.run('go margins 2 4 3 3')
                 	pyferret.run(COMMAND + '/set_up ' + VARIABLE)
@@ -77,6 +101,10 @@ def handler_app(environ, start_response):
 
 		#---------------------------------------------------------
 		elif fields['REQUEST'] == 'GetMap':
+        		pyferret.run('use ' + FILE)
+                	tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
+                	tmpname = os.path.basename(tmpname)
+
         		WIDTH = int(fields['WIDTH'])
         		HEIGHT = int(fields['HEIGHT'])
 

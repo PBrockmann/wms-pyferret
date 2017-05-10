@@ -28,6 +28,11 @@ def index():
     return render_template('index.html')
 
 #--------------------------------------------------------------
+@app.route('/datasets')
+def datasets():
+    return render_template('datasets.html', port='8001')
+
+#--------------------------------------------------------------
 @app.route('/maps')
 def maps():
     return render_template('maps.html', port='8001')

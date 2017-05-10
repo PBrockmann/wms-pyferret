@@ -37,6 +37,10 @@
 	}
 	.controls { visibility: hidden; }
 	.mapContainer:hover > .header > .controls { visibility: visible; }
+	.leaflet-control-container {
+		visibility: hidden;
+	}
+	.mapContainer:hover .leaflet-control-container { visibility: visible; }
 	#dialog {
 		display: none;
 		font-size: 12px;
@@ -181,6 +185,7 @@ function newVariables(data) {			// get from the ajax request below that returns 
 	}
 }
 
+// --> problem every key pressed raise an input event (e, et, eto, etop, etopo, ...)
 $("#file").on('input', function() {
 	// to make cross-domain Ajax call possible https://www.sitepoint.com/jsonp-examples/
 	$.ajax({
