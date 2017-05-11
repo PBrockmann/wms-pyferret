@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Slippy Maps/Datasets</title>
+{{ super() }}
+
+    <style type='text/css'>
+        html, body { font-family: 'arial' }
+	#datasets {
+		white-space: pre;	
+		font-family: monospace;
+  		display: block;
+	}
+    </style>
+{% endblock %}
+
+{% block page_content %}
+<div id="datasets">
+</div>
+
+<script type='text/javascript'>
+
+//===============================================
+var wmsserver = 'http://localhost:{{ port }}';
+
+//===============================================
+function displayDatasets(data) {                   // get from the ajax request below that returns newVariables() 
+        console.log(data);
+	$("#datasets").html(data);
+}
+
+// to make cross-domain Ajax call possible https://www.sitepoint.com/jsonp-examples/
+$.ajax({
+	url: wmsserver,
+        data: 'SERVICE=WMS' + '&REQUEST=GetDatasets',
+        dataType: 'jsonp'               // will return displayDatasets()
+});
+
+</script>
+{% endblock %}
