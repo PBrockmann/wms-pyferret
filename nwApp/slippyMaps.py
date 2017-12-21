@@ -198,8 +198,8 @@ def template_WMS_client():
     <link href='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' rel="stylesheet"/>
     <script src='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
 
-    <link href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css' rel="stylesheet"/>
-    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js'></script>
+    <link href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css' rel="stylesheet"/>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js'></script>
 
     <script src='http://cdn.rawgit.com/turban/Leaflet.Sync/master/L.Map.Sync.js'></script>
     
