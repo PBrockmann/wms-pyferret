@@ -94,7 +94,7 @@ wmspyferret[1] = L.tileLayer.wms(wmsserver, {
 	transparent: true,
     	uppercase: true
 });
-frontiers[1] = L.tileLayer.wms('http://www.globalcarbonatlas.org/geoserver/GCA/wms', {
+frontiers[1] = L.tileLayer.wms('https://www.globalcarbonatlas.org:8443/geoserver/GCA/wms', {
 	layers: 'GCA:GCA_frontiersCountryAndRegions',
 	format: 'image/png',
     	crs: crs,
@@ -118,7 +118,7 @@ wmspyferret[2] = L.tileLayer.wms(wmsserver, {
 	transparent: true,
     	uppercase: true
 });
-frontiers[2] = L.tileLayer.wms('http://www.globalcarbonatlas.org/geoserver/GCA/wms', {
+frontiers[2] = L.tileLayer.wms('https://www.globalcarbonatlas.org:8443/geoserver/GCA/wms', {
 	layers: 'GCA:GCA_frontiersCountryAndRegions',
 	format: 'image/png',
     	crs: crs,
