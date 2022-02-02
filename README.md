@@ -80,6 +80,13 @@ conda install gunicorn
 
 #### Releases notes
 <hr>
+2022/02/02
+
+* Modifications for python3
+* Tested with pyferret 7.63, gunicorn 20.1.0, nwjs 0.60.0
+
+* Add a 3rd example with dynamic creation of maps
+<hr>
 2017/01/23
 
 * Add a 3rd example with dynamic creation of maps

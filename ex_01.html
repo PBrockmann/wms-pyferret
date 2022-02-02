@@ -4,14 +4,14 @@
     <meta charset='utf-8'>
     <title>Slippy maps with WMS from pyferret</title>
 
-    <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
     <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' />
     <script src='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
 
-    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css' />
-    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js'></script>
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css' />
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js'></script>
 
-    <script src='http://cdn.rawgit.com/turban/Leaflet.Sync/0.0.5/L.Map.Sync.js'></script>
+    <script src='http://cdn.rawgit.com/jieter/Leaflet.Sync/master/L.Map.Sync.js'></script>
 
     <style type='text/css'>
         html, body { font-family: 'arial' }
@@ -80,7 +80,7 @@ wmspyferret[1] = L.tileLayer.wms(wmsserver, {
 	transparent: true,
     	uppercase: true
 });
-frontiers[1] = L.tileLayer.wms('http://www.globalcarbonatlas.org/geoserver/GCA/wms', {
+frontiers[1] = L.tileLayer.wms('https://www.globalcarbonatlas.org:8443/geoserver/GCA/wms', {
 	layers: 'GCA:GCA_frontiersCountryAndRegions',
 	format: 'image/png',
     	crs: crs,
@@ -104,7 +104,7 @@ wmspyferret[2] = L.tileLayer.wms(wmsserver, {
 	transparent: true,
     	uppercase: true
 });
-frontiers[2] = L.tileLayer.wms('http://www.globalcarbonatlas.org/geoserver/GCA/wms', {
+frontiers[2] = L.tileLayer.wms('https://www.globalcarbonatlas.org:8443/geoserver/GCA/wms', {
 	layers: 'GCA:GCA_frontiersCountryAndRegions',
 	format: 'image/png',
     	crs: crs,

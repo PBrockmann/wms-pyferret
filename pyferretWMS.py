@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+from optparse import OptionParser
 
 import multiprocessing
 
 import gunicorn.app.base
-from gunicorn.six import iteritems
 
-import os, sys
+import os
+import sys
 import re
 import shutil
 import tempfile
@@ -19,130 +19,141 @@ from jinja2 import Template
 import itertools
 from PIL import Image
 
-#==============================================================
+# ==============================================================
+
+
 def number_of_workers():
     return (multiprocessing.cpu_count() * 2) + 1
 
-#==============================================================
+# ==============================================================
+
+
 def handler_app(environ, start_response):
 
     fields = parse_formvars(environ)
     if environ['REQUEST_METHOD'] == 'GET':
-        
+
         try:
-		if fields['SERVICE'] != 'WMS':
-			raise
+            if fields['SERVICE'] != 'WMS':
+                raise
 
-        	#FILE = fields['FILE']
-        	COMMAND = fields['COMMAND']
-        	VARIABLE = fields['VARIABLE'].replace('%2B','+')
+            #FILE = fields['FILE']
+            COMMAND = fields['COMMAND']
+            VARIABLE = fields['VARIABLE'].replace('%2B', '+')
 
-        	#pyferret.run('use ' + FILE)
-        	#pyferret.run('show data')
-        	pyferret.run('go ' + envScript)                 # load the environment (dataset to open + variables definition)
+            #pyferret.run('use ' + FILE)
+            #pyferret.run('show data')
+            # load the environment (dataset to open + variables definition)
+            pyferret.run('go ' + envScript)
 
-		try:
-        		PATTERN = fields['PATTERN']
-		except:
-        		PATTERN = None
+            try:
+                PATTERN = fields['PATTERN']
+            except:
+                PATTERN = None
 
-                tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
-                tmpname = os.path.basename(tmpname)
+            tmpname = tempfile.NamedTemporaryFile(suffix='.png').name
+            tmpname = os.path.basename(tmpname)
 
-		#---------------------------------------------------------
-		if fields['REQUEST'] == 'GetColorBar':
-                	pyferret.run('set window/aspect=1/outline=0')
-                	pyferret.run('go margins 2 4 3 3')
-                	pyferret.run(COMMAND + '/set_up ' + VARIABLE)
-                	pyferret.run('ppl shakey 1, 0, 0.15, , 3, 9, 1, `($vp_width)-1`, 1, 1.25 ; ppl shade')
-                	pyferret.run('frame/format=PNG/transparent/xpixels=400/file="' + tmpdir + '/key' + tmpname + '"')
+            # ---------------------------------------------------------
+            if fields['REQUEST'] == 'GetColorBar':
+                pyferret.run('set window/aspect=1/outline=0')
+                pyferret.run('go margins 2 4 3 3')
+                pyferret.run(COMMAND + '/set_up ' + VARIABLE)
+                pyferret.run('ppl shakey 1, 0, 0.15, , 3, 9, 1, `($vp_width)-1`, 1, 1.25 ; ppl shade')
+                pyferret.run('frame/format=PNG/transparent/xpixels=400/file="' + tmpdir + '/key' + tmpname + '"')
 
-                	im = Image.open(tmpdir + '/key' + tmpname)
-                	box = (0, 325, 400, 375)
-                	area = im.crop(box)
-                	area.save(tmpdir + '/' + tmpname, "PNG")
+                im = Image.open(tmpdir + '/key' + tmpname)
+                box = (0, 325, 400, 375)
+                area = im.crop(box)
+                area.save(tmpdir + '/' + tmpname, "PNG")
 
-		#---------------------------------------------------------
-		elif fields['REQUEST'] == 'GetMap':
-        		WIDTH = int(fields['WIDTH'])
-        		HEIGHT = int(fields['HEIGHT'])
+            # ---------------------------------------------------------
+            elif fields['REQUEST'] == 'GetMap':
+                WIDTH = int(fields['WIDTH'])
+                HEIGHT = int(fields['HEIGHT'])
 
-        		# BBOX=xmin,ymin,xmax,ymax
-        		BBOX = fields['BBOX'].split(',')
+                # BBOX=xmin,ymin,xmax,ymax
+                BBOX = fields['BBOX'].split(',')
 
-        		HLIM = '/hlim=' + BBOX[0] + ':' + BBOX[2]
-        		VLIM = '/vlim=' + BBOX[1] + ':' + BBOX[3]
+                HLIM = '/hlim=' + BBOX[0] + ':' + BBOX[2]
+                VLIM = '/vlim=' + BBOX[1] + ':' + BBOX[3]
 
-        		pyferret.run('set window/aspect=1/outline=5')           # outline=5 is a strange setting but works otherwise get outline around polygons
-        		pyferret.run('go margins 0 0 0 0')
-                	pyferret.run(COMMAND +  '/noaxis/nolab/nokey' + HLIM + VLIM + ' ' + VARIABLE)
-                	pyferret.run('frame/format=PNG/transparent/xpixels=' + str(WIDTH) + '/file="' + tmpdir + '/' + tmpname + '"')
+                # outline=5 is a strange setting but works otherwise get outline around polygons
+                pyferret.run('set window/aspect=1/outline=5')
+                pyferret.run('go margins 0 0 0 0')
+                pyferret.run(COMMAND + '/noaxis/nolab/nokey' +
+                             HLIM + VLIM + ' ' + VARIABLE)
+                pyferret.run('frame/format=PNG/transparent/xpixels=' +
+                             str(WIDTH) + '/file="' + tmpdir + '/' + tmpname + '"')
 
-	        	if os.path.isfile(tmpdir + '/' + tmpname):
-				if PATTERN:
-					img = Image.open(tmpdir + '/' + tmpname)
-	        	        	pattern = Image.open(PATTERN)
-					img = Image.composite(img, pattern, pattern)
-					img.save(tmpdir + '/' + tmpname)
-	
-		#---------------------------------------------------------
-		else:
-			raise
+                if os.path.isfile(tmpdir + '/' + tmpname):
+                    if PATTERN:
+                        img = Image.open(tmpdir + '/' + tmpname)
+                        pattern = Image.open(PATTERN)
+                        img = Image.composite(img, pattern, pattern)
+                        img.save(tmpdir + '/' + tmpname)
 
-		if os.path.isfile(tmpdir + '/' + tmpname):
-			ftmp = open(tmpdir + '/' + tmpname, 'rb')
-			img = ftmp.read()
-			ftmp.close()
-			os.remove(tmpdir + '/' + tmpname)
+            # ---------------------------------------------------------
+            else:
+                raise
 
-		start_response('200 OK', [('content-type', 'image/png')])
-		return iter(img) 
+            if os.path.isfile(tmpdir + '/' + tmpname):
+                ftmp = open(tmpdir + '/' + tmpname, 'rb')
+                img = ftmp.read()
+                ftmp.close()
+                os.remove(tmpdir + '/' + tmpname)
+
+            start_response('200 OK', [('content-type', 'image/png')])
+            return [img]
 
         except:
-                return iter('Exception caught')
+            return iter('Exception caught')
 
-#==============================================================
+# ==============================================================
+
+
 class myArbiter(gunicorn.arbiter.Arbiter):
 
     def halt(self):
-	# Close pyferret
+        # Close pyferret
         pyferret.stop()
 
-	print('Removing temporary directory: ', tmpdir)
-	shutil.rmtree(tmpdir)
+        print('Removing temporary directory: ', tmpdir)
+        shutil.rmtree(tmpdir)
 
         super(myArbiter, self).halt()
 
 
-#==============================================================
+# ==============================================================
 class StandaloneApplication(gunicorn.app.base.BaseApplication):
 
     def __init__(self, app, options=None):
 
-	# Start pyferret	
+        # Start pyferret
         pyferret.start(journal=False, unmapped=True, quiet=True, verify=False)
 
-	master_pid = os.getpid()
-	print('---------> gunicorn master pid: ', master_pid)
+        master_pid = os.getpid()
+        print('---------> gunicorn master pid: ', master_pid)
 
-	if not serverOnly:		# nw will be launched 
-		listSynchroMapsToSet = list(itertools.permutations(range(1,nbMaps+1), 2))
+        if not serverOnly:		# nw will be launched
+            listSynchroMapsToSet = list(
+                itertools.permutations(range(1, nbMaps+1), 2))
 
-		instance_WMS_Client = Template(template_WMS_client())
-		instance_NW_Package = Template(template_nw_package())
+            instance_WMS_Client = Template(template_WMS_client())
+            instance_NW_Package = Template(template_nw_package())
 
-		with open(tmpdir + '/index.html', 'wb') as f:
-    			f.write(instance_WMS_Client.render(cmdArray=cmdArray, gunicornPID=master_pid, 
-							   listSynchroMapsToSet=listSynchroMapsToSet,
-							   mapWidth=mapWidth, mapHeight=mapHeight, 
-							   mapCenter=mapCenter, mapZoom=mapZoom, port=port))
-		with open(tmpdir + '/package.json', 'wb') as f:
-    			f.write(instance_NW_Package.render(nbMaps=nbMaps,
-							   mapWidth=mapWidth, mapHeight=mapHeight))
+            with open(tmpdir + '/index.html', 'w') as f:
+                f.write(instance_WMS_Client.render(cmdArray=cmdArray, gunicornPID=master_pid,
+                                                   listSynchroMapsToSet=listSynchroMapsToSet,
+                                                   mapWidth=mapWidth, mapHeight=mapHeight,
+                                                   mapCenter=mapCenter, mapZoom=mapZoom, port=port))
+            with open(tmpdir + '/package.json', 'w') as f:
+                f.write(instance_NW_Package.render(nbMaps=nbMaps,
+                                                   mapWidth=mapWidth, mapHeight=mapHeight))
 
-		# Launch NW.js
-    		proc = subprocess.Popen(['nw', tmpdir])
-    		print('Client nw process: ', proc.pid)
+            # Launch NW.js
+            proc = subprocess.Popen(['nw', tmpdir])
+            print('Client nw process: ', proc.pid)
 
         self.options = options or {}
         self.application = app
@@ -150,9 +161,9 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
         super(StandaloneApplication, self).__init__()
 
     def load_config(self):
-        config = dict([(key, value) for key, value in iteritems(self.options)
+        config = dict([(key, value) for key, value in self.options.items()
                        if key in self.cfg.settings and value is not None])
-        for key, value in iteritems(config):
+        for key, value in config.items():
             self.cfg.set(key.lower(), value)
 
     def load(self):
@@ -165,9 +176,11 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
         except RuntimeError as e:
             print('\nError: %s\n' % e, file=sys.stderr)
             sys.stderr.flush()
-	    sys.exit(1)
+            sys.exit(1)
 
-#==============================================================
+# ==============================================================
+
+
 def template_WMS_client():
 
     return '''
@@ -177,14 +190,14 @@ def template_WMS_client():
     <meta charset='utf-8'>
     <title>Slippy maps with WMS from pyferret</title>
 
-    <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
     <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css' />
     <script src='http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
 
-    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css' />
-    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js'></script>
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css' />
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js'></script>
 
-    <script src='http://cdn.rawgit.com/turban/Leaflet.Sync/master/L.Map.Sync.js'></script>
+    <script src='http://cdn.rawgit.com/jieter/Leaflet.Sync/master/L.Map.Sync.js'></script>
 
     <style type='text/css'>
         html, body { font-family: 'arial' }
@@ -249,7 +262,7 @@ wmspyferret[{{ loop.index }}] = L.tileLayer.wms('http://localhost:{{ port }}', {
 	transparent: true,
     	uppercase: true
 });
-frontiers[{{ loop.index }}] = L.tileLayer.wms('http://www.globalcarbonatlas.org/geoserver/GCA/wms', {
+frontiers[{{ loop.index }}] = L.tileLayer.wms('https://www.globalcarbonatlas.org:8443/geoserver/GCA/wms', {
 	layers: 'GCA:GCA_frontiersCountryAndRegions',
 	format: 'image/png',
     	crs: crs,
@@ -346,7 +359,9 @@ process.on('exit', function (){
 </html>
 '''
 
-#==============================================================
+# ==============================================================
+
+
 def template_nw_package():
 
     return '''
@@ -361,51 +376,51 @@ def template_nw_package():
 }
 '''
 
-#==============================================================
-from optparse import OptionParser
 
-#------------------------------------------------------
+# ==============================================================
+
+# ------------------------------------------------------
 usage = "%prog [--width=400] [--height=400] [--size=value] [--center=[0,0]] [--zoom=1]" + \
-	"\n                      [--env=pyferretWMS.jnl] [--server] [--port=8000]" + \
-	"\n                      'cmd/qualifiers variable; cmd/qualifiers variable'" + \
-	"\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to" + \
-	"\nseparate the variable from the command and its qualifiers). The semi-colon character ';'" +\
-	"\nis the separator between commands and will determine the number of maps to be drawn." + \
-	"\nThe qualifiers can include the title qualifier considering that the space character" + \
-	"\nis not allowed since used to distinguish the cmd/qualifiers and the variable(s)." + \
-	"\nFor this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon)." + \
-	"\nFor example: 'shade/lev=20/title=Simulation&nbspA varA; shade/lev=20/title=Simulation&nbspB varB'"
+        "\n                      [--env=pyferretWMS.jnl] [--server] [--port=8000]" + \
+        "\n                      'cmd/qualifiers variable; cmd/qualifiers variable'" + \
+        "\n\n'cmd/qualifiers variable' is a classic ferret call (no space allowed except to" + \
+        "\nseparate the variable from the command and its qualifiers). The semi-colon character ';'" +\
+        "\nis the separator between commands and will determine the number of maps to be drawn." + \
+        "\nThe qualifiers can include the title qualifier considering that the space character" + \
+        "\nis not allowed since used to distinguish the cmd/qualifiers and the variable(s)." + \
+        "\nFor this, you can use the HTML code '&nbsp' for the non-breaking space (without the ending semi-colon)." + \
+        "\nFor example: 'shade/lev=20/title=Simulation&nbspA varA; shade/lev=20/title=Simulation&nbspB varB'"
 
 version = "%prog 0.9.7"
 
-#------------------------------------------------------
+# ------------------------------------------------------
 parser = OptionParser(usage=usage, version=version)
 
 parser.add_option("--width", type="int", dest="width", default=400,
-		help="200 < map width <= 600")
+                  help="200 < map width <= 600")
 parser.add_option("--height", type="int", dest="height", default=400,
-		help="200 < map height <= 600")
+                  help="200 < map height <= 600")
 parser.add_option("--size", type="int", dest="size",
-		help="200 < map height and width <= 600")
+                  help="200 < map height and width <= 600")
 parser.add_option("--env", dest="envScript", default="pyferretWMS.jnl",
-		help="ferret script to set the environment (default=pyferretWMS.jnl). It contains datasets to open, variables definition.")
+                  help="ferret script to set the environment (default=pyferretWMS.jnl). It contains datasets to open, variables definition.")
 parser.add_option("--center", type="string", dest="center", default='[0,-40]',
-		help="Initial center of maps as [lat, lon] (default=[0,-40])")
+                  help="Initial center of maps as [lat, lon] (default=[0,-40])")
 parser.add_option("--zoom", type="int", dest="zoom", default=1,
-		help="Initial zoom of maps (default=1)")
+                  help="Initial zoom of maps (default=1)")
 parser.add_option("--server", dest="serverOnly", action="store_true", default=False,
-		help="Server only (default=False)")
+                  help="Server only (default=False)")
 parser.add_option("--port", type="int", dest="port", default=8000,
-		help="Server port number (default=8000)")
+                  help="Server port number (default=8000)")
 
 (options, args) = parser.parse_args()
 
 if options.size:
-	mapHeight = options.size
-	mapWidth = options.size
+    mapHeight = options.size
+    mapWidth = options.size
 else:
-	mapHeight = options.height
-	mapWidth = options.width
+    mapHeight = options.height
+    mapWidth = options.width
 
 mapCenter = options.center
 mapZoom = options.zoom
@@ -413,7 +428,7 @@ envScript = options.envScript
 serverOnly = options.serverOnly
 port = options.port
 
-#------------------------------------------------------
+# ------------------------------------------------------
 # Global variables
 nbMaps = 0
 cmdArray = []
@@ -421,56 +436,56 @@ tmpdir = tempfile.mkdtemp()
 
 print('Temporary directory to remove: ', tmpdir)
 
-#------------------------------------------------------
+# ------------------------------------------------------
 if serverOnly:
-	if len(args) != 0:
-        	parser.error("No argument needed in mode server")
-		parser.print_help()
+    if len(args) != 0:
+        parser.error("No argument needed in mode server")
+        parser.print_help()
 
 else:
-	if len(args) != 1:
-        	parser.error("Wrong number of arguments")
-		parser.print_help()
+    if len(args) != 1:
+        parser.error("Wrong number of arguments")
+        parser.print_help()
 
-	if (mapWidth < 200 or mapWidth > 600) or (mapHeight < 200 or mapHeight > 600):
-		parser.error("Map size options incorrect (200 <= size,width,height <= 600)")
-		parser.print_help()
-		sys.exit(1)
-	
-	if not os.path.isfile(envScript):
-		parser.error("Environment script option missing")
-		parser.print_help()
-		sys.exit(1)
-	
-	cmdsRequested = args[0]
-	
-	cmds = cmdsRequested.split(';')		# get individual commands
-	cmds = map(str.strip, cmds)  		# remove surrounding spaces if present
-	
-	nbMaps = len(cmds)
-	print(str(nbMaps) + ' maps to draw')
-	
-	if nbMaps > 4:
-		print("\n=======> Error: Maximum number of maps: 4\n")
-		parser.print_help()
-		sys.exit(1)
-	
-	# create array of dict {'command', 'variable'}
-	for i,cmd in enumerate(cmds, start=1):
-		# Get command
-		command = cmd.split(' ')[0]			
-		# Get variable
-		variable = ' '.join(cmd.split(' ')[1:])
-		cmdArray.append({'command': command, 'variable': variable})
+    if (mapWidth < 200 or mapWidth > 600) or (mapHeight < 200 or mapHeight > 600):
+        parser.error(
+            "Map size options incorrect (200 <= size,width,height <= 600)")
+        parser.print_help()
+        sys.exit(1)
 
-#------------------------------------------------------
+    if not os.path.isfile(envScript):
+        parser.error("Environment script option missing")
+        parser.print_help()
+        sys.exit(1)
+
+    cmdsRequested = args[0]
+
+    cmds = cmdsRequested.split(';')		# get individual commands
+    cmds = list(map(str.strip, cmds))  		# remove surrounding spaces if present
+
+    nbMaps = len(cmds)
+    print(str(nbMaps) + ' maps to draw')
+
+    if nbMaps > 4:
+        print("\n=======> Error: Maximum number of maps: 4\n")
+        parser.print_help()
+        sys.exit(1)
+
+    # create array of dict {'command', 'variable'}
+    for i, cmd in enumerate(cmds, start=1):
+        # Get command
+        command = cmd.split(' ')[0]
+        # Get variable
+        variable = ' '.join(cmd.split(' ')[1:])
+        cmdArray.append({'command': command, 'variable': variable})
+
+# ------------------------------------------------------
 options = {
     'bind': '%s:%s' % ('127.0.0.1', port),
     'workers': number_of_workers(),
     'worker_class': 'sync',
-    'threads': 1 
+    'threads': 1
 }
 StandaloneApplication(handler_app, options).run()
 
 sys.exit(1)
-
